@@ -1,0 +1,1743 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.24">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>基于克里金法的足球球权热图及价值建模研究——以德甲数据为例</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="论文代码_files/libs/clipboard/clipboard.min.js"></script>
+<script src="论文代码_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="论文代码_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="论文代码_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="论文代码_files/libs/quarto-html/popper.min.js"></script>
+<script src="论文代码_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="论文代码_files/libs/quarto-html/anchor.min.js"></script>
+<link href="论文代码_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="论文代码_files/libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="论文代码_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="论文代码_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="论文代码_files/libs/bootstrap/bootstrap-d6a003b94517c951b2d65075d42fb01b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">基于克里金法的足球球权热图及价值建模研究——以德甲数据为例</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="思路概述" class="level1">
+<h1>思路概述</h1>
+<p>基于原本球权热图使用核函数这个基础上进行克里金方向的改进，加入如果在某个区域做某个动作就会有更高价值的新体系定义</p>
+<p>克里金法来完成对于权重这方面的权衡</p>
+<p>最后的实证分析：找具体比赛和球员，做可视化的分析</p>
+</section>
+<section id="第一章-绪论" class="level1">
+<h1>第一章 绪论</h1>
+<section id="研究背景" class="level2">
+<h2 class="anchored" data-anchor-id="研究背景">1.1 研究背景</h2>
+<p>在现代足球战术体系的演进中，空间控制力（即球队整体的有效控球价值分布）的量化已成为职业球队评估比赛表现、制定战术决策的核心指标之一 。随着光学追踪技术与事件记录系统的普及，足球数据分析正经历从传统的“结果统计”（如控球率、射门数）向高维度的“时空过程分析”跨越。在这一背景下，如何直观且科学地呈现球员或球队在球场上的活动范围与威胁区域，成为了体育分析领域的热点课题。</p>
+<p>目前，学术界与工业界生成足球热点图的主流非参数化方法为核密度估计法（Kernel Density Estimation, KDE） 。其核心优势在于计算的高效性与视觉呈现的直观性。通过输入离散的球员触球坐标点，叠加核函数，KDE 能够以极低的时耗生成平滑的概率密度表面，帮助教练组快速建立对球员宏观覆盖范围的认知 。</p>
+<p>然而，随着战术分析深度的增加，核密度估计法在球权价值建模中的系统性局限逐渐显现。首先，KDE 本质上是一种基于密度的“计数”逻辑，仅能反映球权发生的“频率”，却无法剥离数据背后的“质量”属性 。在足球比赛中，一次对方禁区前沿的致命直塞，其战术价值远高于己方后场十次毫无压力的横传。KDE 容易导致高频无效触球区域在视觉权重上掩盖低频高价值区域 。其次，KDE 忽略了足球场空间的自相关性趋势，其平滑程度完全取决于人为设定的带宽，容易在数据稀疏区域产生过度平滑或噪声干扰 。更为致命的是，KDE 无法提供反映预测置信度的误差分布图，这使得基于 KDE 生成的战术热图在面对高风险的临场决策时，缺乏严密的统计学支撑 。</p>
+<p>针对上述痛点，本研究试图打破传统“频率统计”的桎梏，引入地统计学中专门处理空间自相关性的克里金法，结合德甲联赛的真实事件数据，探索构建一套兼具数学严谨性与战术解释力的足球球权空间价值模型 。</p>
+</section>
+<section id="研究目的与意义" class="level2">
+<h2 class="anchored" data-anchor-id="研究目的与意义">1.2 研究目的与意义</h2>
+<section id="理论意义" class="level3">
+<h3 class="anchored" data-anchor-id="理论意义">1.2.1 理论意义</h3>
+<p>本研究推动了足球空间分析从“频率描述”向“统计推断”的实质性跨越。传统基于核密度估计的热图虽然高效，但割裂了足球场上点与点之间内在的空间自相关性。通过引入克里金法，本研究利用变异函数（Variogram）定量表征了足球场上不同区域间的空间依赖特征，为足球地理信息系统分析提供了更严密的统计学基础。更重要的是，克里金法作为一种“最佳线性无偏估计”（BLUE）方法，能够有效地结合实际事件（如传球、射门、防守解围）以及事件发生的动态情景（如位置坐标、是否受到压迫、传球高度等），将离散的球权动作转化为覆盖全场的连续价值曲面 。此外，克里金法独特的预测方差（Kriging Variance）输出功能，为评估空间分析的不确定性提供了数学依据，弥补了现有体育空间分析研究在模型置信度量化方面的理论空白 。</p>
+</section>
+<section id="实践意义" class="level3">
+<h3 class="anchored" data-anchor-id="实践意义">1.2.2 实践意义</h3>
+<p>在实战应用层面，本研究为职业足球的精准战术复盘与决策提供了科学导航 。相比于 KDE 易受人为带宽设置干扰的缺陷，基于克里金法的平滑热图能更精准地识别出具有统计显著性的“战术走廊”和关键控球区域 。特别是在样本相对稀疏的极端区域，模型生成的误差分布图具有极强的实战预警价值，能够直观标注出数据预测不可信的“情报盲区”，有效降低数据分析师因过度解读噪声而产生的战术失误风险。此外，本研究建立的基于“空间质量”而非“空间频率”的复合评价体系（即球权价值 <span class="math inline">\(Z\)</span> 模型），能更公平、客观地量化那些在低频区域做出关键战术贡献的球员（如拖后组织核心、空间穿插型前锋等）。这不仅丰富了球队日常的战术诊断工具箱，更为职业俱乐部的引援定价、人才选拔以及对手针对性布阵提供了极具价值的量化依据 。</p>
+</section>
+</section>
+<section id="国内外研究现状与文献综述" class="level2">
+<h2 class="anchored" data-anchor-id="国内外研究现状与文献综述">1.3 国内外研究现状与文献综述</h2>
+<section id="足球时空事件数据集的建立与开放" class="level3">
+<h3 class="anchored" data-anchor-id="足球时空事件数据集的建立与开放">1.3.1 足球时空事件数据集的建立与开放</h3>
+<p>足球大数据研究的基石在于高质量时空数据集的构建 。Pappalardo等（2019）在其研究中详细介绍了目前足球领域广泛使用的公开数据集，涵盖了数百万个时空匹配的比赛事件数据，这种结构化的数据形式为后续所有关于球权分布与空间建模的研究提供了标准化的底座 。在此基础上，Garrido 等（2022）对比了基于事件数据与追踪数据生成热图的差异，证实了事件数据在捕捉球权转换及特定战术意图方面具有不可替代的业务价值 。</p>
+</section>
+<section id="运动空间可视化的演进与-kde-的局限" class="level3">
+<h3 class="anchored" data-anchor-id="运动空间可视化的演进与-kde-的局限">1.3.2 运动空间可视化的演进与 KDE 的局限</h3>
+<p>空间分析在体育界的前沿探索可追溯至 Goldsberry（2012）提出的“CourtVision”系统 。该研究通过对 NBA 球员投篮位置的空间热点分析，定义了“空间效能”概念，为职业体育的视觉分析奠定了基础 。在足球领域，Link 等（2016）利用核密度估计法（KDE）成功构建了职业足球的实时球权区域分布图，为界定球队势力范围提供了量化标准 。+1然而，Memmert 等（2017）在综述战术分析技术时明确指出，尽管以 KDE为代表的非参数方法应用广泛，但其在处理空间回归与插值时的统计推断能力较弱，难以揭示深层次的空间逻辑关系 。Schultze 与 Wellbrock（2015）进一步提出，现代足球需要更严密的统计与空间分析系统来综合评估球员表现，而不能仅停留在简单的事件密度分布层面 。</p>
+</section>
+<section id="克里金法在空间建模中的前沿探索" class="level3">
+<h3 class="anchored" data-anchor-id="克里金法在空间建模中的前沿探索">1.3.3 克里金法在空间建模中的前沿探索</h3>
+<p>为了克服 KDE 的局限，部分学者开始关注地统计学方法。Kotzbek 与 Kainz（2015）作为这一领域的先驱，探讨了利用克里金插值处理足球追踪数据并生成“表现表面”的可能性 。Yue 等（2014）通过对传球网络空间关联性的统计分析，证实了足球场上事件分布并非随机，而是存在显著的空间自相关特征，这为克里金法的应用提供了合法性依据 。Erdogan（2015）的跨学科实验也证明，克里金法能够识别被 KDE 忽略的隐藏空间模式，其在热点预测的准确性上显著优于核密度估计 。在足球空间价值建模的前沿，Fernandez 与 Bornn（2018）提出的“开阔空间”量化技术，利用高阶统计建模衡量球员的空间创造能力，这与本研究所倡导的价值建模理念高度契合 。</p>
+</section>
+<section id="文献评述" class="level3">
+<h3 class="anchored" data-anchor-id="文献评述">1.3.4 文献评述</h3>
+<p>综合上述文献可知，当前足球空间分析正处于从“单纯的可视化展示”向“严密的因果推断与价值评估”过渡的关键时期。尽管高质量的时空数据集已初具规模，但现有的分析工具仍高度依赖统计推断能力较弱的 KDE 方法 。将克里金法系统性地引入足球战术分析，并结合具体赛事数据进行球权价值的重构与验证，目前在学术界仍属于较为前沿且探索空间巨大的领域。</p>
+</section>
+</section>
+<section id="研究内容与框架" class="level2">
+<h2 class="anchored" data-anchor-id="研究内容与框架">1.4 研究内容与框架</h2>
+<p>本研究打破传统足球分析中依赖核密度估计的局限，深度探讨球权分布的空间结构及其潜在战术价值 。整体研究框架分为以下五个部分：</p>
+<ol type="1">
+<li><p>理论基础与指标构建：构建多维度的“球权战术价值（<span class="math inline">\(Z\)</span>）”指标体系，融合动作基础分、空间向心力权重、防守压迫与动作质量等变量。</p></li>
+<li><p>空间相关性验证与变异函数分析：提取德甲赛事的球权事件坐标，通过拟合实验变异函数，定量表征球场上战术事件的空间自相关性，论证克里金模型应用的可行性 。</p></li>
+<li><p>克里金插值建模与全景场生成：基于变异函数参数，执行普通克里金插值，生成平滑且连续的“德甲球权价值基准场”，并利用交叉验证（LOOCV）评估模型的绝对误差（RMSE）与预测方差（MSDR）。</p></li>
+<li><p>宏观战术实证（单队表现与残差分析）：以特定球队（如拜仁慕尼黑）为例，生成单队战术价值场，并与联盟基准场进行差值计算，生成战术差异图，从而直观呈现球队的战术溢价区与薄弱区 。</p></li>
+<li><p>微观球员实证与价值重塑：将模型下沉至个人维度，选取具有典型空间特征的球员，生成个人专属价值热图，探讨模型在评估“空间阅读型”或“低频高价值”球员时的优势。</p></li>
+</ol>
+</section>
+<section id="研究创新点" class="level2">
+<h2 class="anchored" data-anchor-id="研究创新点">1.5 研究创新点</h2>
+<ol type="1">
+<li><p>方法论创新：从非参数平滑到参数化统计推断</p>
+<p>本研究创新性地将地质学领域的克里金法系统引入足球战术分析 。通过考虑空间自相关性这一核心变量，模型弥补了传统 KDE 算法在处理离散数据时对空间规律的忽视，提供了具有更强数学解释力的预测表面 。</p></li>
+<li><p>评价维度拓展：实现“事件频率”与“战术价值”的深度融合</p>
+<p>突破了现有热图仅展示“球在哪里活动”的表象，本研究自创了多维度的价值加权函数，将球权行为的“质量信息”（如威胁度、受迫状态）转化为空间权重 。生成的模型不再是一张活动轨迹图，而是动态的“空间潜在收益图” 。</p></li>
+<li><p>决策安全性创新：引入数据置信度量化机制</p>
+<p>利用克里金法输出预测方差的特性，本研究在战术分析中引入了“置信度”与“不确定性”概念 。这使得分析师能够清晰识别由样本不足引发的统计伪影，为现代足球的高风险战术决策提供了可量化的安全边界。</p></li>
+</ol>
+</section>
+</section>
+<section id="第二章-数据介绍与数据清洗" class="level1">
+<h1>第二章 数据介绍与数据清洗</h1>
+</section>
+<section id="第三章-概念界定与理论模型介绍" class="level1">
+<h1>第三章 概念界定与理论模型介绍</h1>
+<section id="传统空间分布估计模型" class="level2">
+<h2 class="anchored" data-anchor-id="传统空间分布估计模型">3.1 传统空间分布估计模型</h2>
+<section id="核密度估计法-kernel-density-estimation-kde" class="level3">
+<h3 class="anchored" data-anchor-id="核密度估计法-kernel-density-estimation-kde">3.1.1 核密度估计法 (Kernel Density Estimation, KDE)</h3>
+<p>核密度估计法是目前足球数据分析中生成“热点图”最广泛使用的非参数化空间统计方法。其基本原理是在空间中每一个离散的事件发生点（如球员触球坐标）上放置一个平滑的核函数，通过将所有点的核函数进行叠加，计算出整个二维空间内的概率密度表面。</p>
+<p>对于二维足球场空间，其核密度估计的数学表达式通常为：</p>
+<p><span class="math display">\[\hat{f}(x,y) = \frac{1}{n h_x h_y} \sum_{i=1}^{n} K\left(\frac{x - x_i}{h_x}, \frac{y - y_i}{h_y}\right)\]</span></p>
+<p>其中，<span class="math inline">\(n\)</span> 为样本点总数，<span class="math inline">\(h_x, h_y\)</span> 为人为设定的平滑带宽，<span class="math inline">\(K\)</span> 为核函数（通常选用高斯核）。</p>
+<p><strong>概念局限性</strong>：KDE 本质上刻画的是“事件发生的频率密度”。在足球场景中，它只能回答“球员在哪里触球最多”，却无法回答“哪里的触球最具战术威胁”。同时，其平滑结果极度依赖主观设定的带宽 <span class="math inline">\(h\)</span>，且假设空间中的独立事件彼此无关，忽略了足球运动中天然存在的空间自相关性。</p>
+</section>
+</section>
+<section id="空间统计学与克里金插值模型" class="level2">
+<h2 class="anchored" data-anchor-id="空间统计学与克里金插值模型">3.2 空间统计学与克里金插值模型</h2>
+<p>为了克服 KDE 的局限，本研究引入地统计学模型。地统计学的核心逻辑在于，它超越了传统非参数平滑算法的机械刻画，深刻承认了空间分布数据所独具的“结构性”与“随机性”双重特征。具体而言，“结构性”是指足球场上的战术价值并非随机散布，而是受到距离衰减规律和战术阵型的约束，呈现出强烈的空间依赖与连续演变趋势；而“随机性”则表征了在复杂的体育竞技环境中，由于测量误差、球员个体决策偏差以及不可预测的球权物理反弹所造成的局部空间异质性。通过统筹这两种特性，地统计学模型能够以更为严密的数学逻辑，还原出高度契合真实比赛环境的空间价值场。</p>
+<section id="空间自相关与战术溢出效应" class="level3">
+<h3 class="anchored" data-anchor-id="空间自相关与战术溢出效应">3.2.1 空间自相关与战术溢出效应</h3>
+<p>空间自相关是地统计学区别于经典统计学的核心概念。经典统计学通常假设样本之间是独立同分布的，但在处理真实世界的空间数据时，这一假设往往失效。1970年，瓦尔多·托布勒（Waldo Tobler）提出了著名的“托布勒地理学第一定律”：“任何事物都是与其他事物相关的，但相近的事物关联更紧密。”这一定律奠定了空间自相关理论的基石，即空间位置上相近的变量取值之间存在着内在的统计学依赖关系。</p>
+<p>在高度复杂且动态变化的足球场上，这一地理学定律展现出了极强的战术适用性。足球比赛本质上是对空间的争夺与利用，球场上的战术事件绝非孤立发生，而是具有显著的“空间溢出效应”。某一区域的高质量控球，往往会跨越物理距离，对其相邻甚至更远的区域产生战术辐射和防守牵制。</p>
+<p>具体而言，这种空间自相关性在足球战术中主要体现在以下两个维度：</p>
+<ol type="1">
+<li><strong>进攻威胁的辐射性（正向空间自相关）</strong>：当进攻方在诸如肋部区域或大禁区前沿完成一次极具威胁的持球推进时，不仅该坐标点本身的战术价值剧增，其相邻的禁区中路或底线传中区的潜在威胁值也会随之呈现指数级上升。这种高价值区域在空间上的聚集特征，在统计学上表现为显著的正向空间自相关。</li>
+<li><strong>防守重心的拉扯（防守引力效应）</strong>：某一边路的高频触球会形成防守引力，迫使防守方阵型整体倾斜。这种局部空间的拥挤，会在球场的另一侧（弱侧）暴露出高价值的开阔空间。这种由一侧的行动引起另一侧价值变化的联动关系，进一步证明了球场空间是一个不可割裂的有机整体。</li>
+</ol>
+<p>传统基于核密度估计或简单网格划分的统计方法，其致命弱点正是将球场上每一米、每一次触球都视为相互独立的离散事件，粗暴地剥离了上述的空间依赖关系。因此，本研究引入空间自相关理论，目的正是为了在数学层面上还原足球场上点与点之间隐蔽的战术联系。只有承认并量化了这种空间自相关性，我们才能顺理成章地使用变异函数去测量这种战术辐射的有效半径，进而为克里金插值提供科学的推断依据。</p>
+</section>
+<section id="变异函数" class="level3">
+<h3 class="anchored" data-anchor-id="变异函数">3.2.2 变异函数</h3>
+<p>变异函数（或半变异函数）是量化空间自相关性的核心数学工具。它描述了空间变量随着距离的增加，其空间依赖性是如何减弱的。 设 <span class="math inline">\(Z(x_{\alpha})\)</span> 为球场上位置 <span class="math inline">\(x_{\alpha}\)</span> 处的球权战术价值，定义其空间实验变异函数 <span class="math inline">\(\gamma(h)\)</span> 为：</p>
+<p><span class="math display">\[\gamma(h) = \frac{1}{2N(h)} \sum_{i=1}^{N(h)} [Z(x_i) - Z(x_i + h)]^2\]</span></p>
+<p>其中，<span class="math inline">\(h\)</span> 为空间滞后距离（即两点间的距离），<span class="math inline">\(N(h)\)</span> 为距离为 <span class="math inline">\(h\)</span> 的样本点对数量。</p>
+<p>本研究采用<strong>指数模型</strong>对实验变异函数进行理论拟合。其拟合结果包含三个极其重要的地统计学概念：</p>
+<ol type="1">
+<li><strong>块金值 (Nugget)</strong>：当距离 <span class="math inline">\(h\)</span> 趋近于 0 时，变异函数不为 0 的常数项，代表由测量误差或微观随机性（如足球场上不可预测的球权反弹）造成的空间异质性。</li>
+<li><strong>基台值 (Sill)</strong>：随着距离的增加，变异函数达到平稳状态的极限值，代表变量在全场的总空间变异程度。</li>
+<li><strong>变程 (Range)</strong>：变异函数达到基台值时的距离。在足球语境中，变程具有极其重要的战术意义，它代表了球员战术动作在球场上的“最大有效辐射半径”。超过此距离，事件之间即被视为统计独立。</li>
+</ol>
+</section>
+<section id="普通克里金插值法及其数学推导" class="level3">
+<h3 class="anchored" data-anchor-id="普通克里金插值法及其数学推导">3.2.3 普通克里金插值法及其数学推导</h3>
+<p>普通克里金法是地统计学中应用最为广泛的空间局部插值方法。与传统基于纯几何距离的反距离权重法（IDW）不同，普通克里金法不仅仅考虑已知点与预测点之间的距离，更通过变异函数将已知点之间的空间拓扑关系（如数据的聚集与遮蔽效应）纳入计算。它被称为“最佳线性无偏估计”（BLUE），其核心在于在满足无偏性的前提下，使得预测误差的方差最小。</p>
+<section id="理论前提内蕴平稳性假设" class="level4">
+<h4 class="anchored" data-anchor-id="理论前提内蕴平稳性假设">1. 理论前提：内蕴平稳性假设</h4>
+<p>普通克里金法的应用建立在内蕴平稳性假设之上。在足球场空间分布的语境下，该假设意味着：</p>
+<ol type="1">
+<li><strong>期望的恒定性</strong>：在局部的搜索邻域内，球权战术价值 <span class="math inline">\(Z(x)\)</span> 的数学期望是一个常数，虽未知但固定，即 <span class="math inline">\(E[Z(x)] = c\)</span>（常数）。</li>
+<li><strong>增量的平稳性</strong>：球场上任意两点 <span class="math inline">\(x_i\)</span> 和 <span class="math inline">\(x_i+h\)</span> 处的球权价值之差的方差，仅与两点间的空间向量 <span class="math inline">\(h\)</span> 有关，而与它们在球场上的绝对位置无关。这一特性正是前文构建变异函数 <span class="math inline">\(\gamma(h)\)</span> 的理论基础。</li>
+</ol>
+</section>
+<section id="线性无偏估计的构建" class="level4">
+<h4 class="anchored" data-anchor-id="线性无偏估计的构建">2. 线性无偏估计的构建</h4>
+<p>对于球场上任意未发生实际触球的空白网格点 <span class="math inline">\(x_0\)</span>，可以利用其周围邻域内的 <span class="math inline">\(n\)</span> 个已知有效样本点 <span class="math inline">\(Z(x_1), Z(x_2), \dots, Z(x_n)\)</span>，来估算该点的战术价值 <span class="math inline">\(Z^*(x_0)\)</span>。普通克里金法采用已知样本值的线性组合来进行预测：</p>
+<p><span class="math display">\[Z^*(x_0) = \sum_{i=1}^{n} \lambda_i Z(x_i)\]</span></p>
+<p>其中，<span class="math inline">\(\lambda_i\)</span> 为赋予第 <span class="math inline">\(i\)</span> 个已知样本点的克里金权重系数。</p>
+<p>为了保证该估计是无偏的，即估计值的期望必须等于真实值的期望，必须满足以下条件：</p>
+<p><span class="math display">\[E[Z^*(x_0) - Z(x_0)] = 0\]</span></p>
+<p>代入内蕴平稳性假设 <span class="math inline">\(E[Z(x)] = c\)</span>，可推导出权重系数的无偏约束条件：</p>
+<p><span class="math display">\[\sum_{i=1}^{n} \lambda_i = 1\]</span></p>
+</section>
+<section id="估计方差最小化与拉格朗日乘数法" class="level4">
+<h4 class="anchored" data-anchor-id="估计方差最小化与拉格朗日乘数法">3. 估计方差最小化与拉格朗日乘数法</h4>
+<p>克里金法被称为“最佳（Best）”估计，是因为它要在所有满足 <span class="math inline">\(\sum \lambda_i = 1\)</span> 的线性组合中，寻找到一组最优的权重 <span class="math inline">\(\lambda_i\)</span>，使得预测值与真实值之间的估计方差最小。 估计方差 <span class="math inline">\(\sigma_E^2\)</span> 可表示为：</p>
+<p><span class="math display">\[\sigma_E^2 = Var[Z^*(x_0) - Z(x_0)]\]</span></p>
+<p>将该方差表达式利用前文定义的变异函数 <span class="math inline">\(\gamma(h)\)</span> 展开，可以将最小化方差的优化目标转化为变异函数的表达式：</p>
+<p><span class="math display">\[\sigma_E^2 = 2 \sum_{i=1}^{n} \lambda_i \gamma(x_i, x_0) - \sum_{i=1}^{n} \sum_{j=1}^{n} \lambda_i \lambda_j \gamma(x_i, x_j)\]</span></p>
+<p>这是一个带有等式约束的非线性极值问题。为了求解使得 <span class="math inline">\(\sigma_E^2\)</span> 最小的 <span class="math inline">\(\lambda_i\)</span>，这里引入拉格朗日乘数法。构造拉格朗日目标函数 <span class="math inline">\(L\)</span>：</p>
+<p><span class="math display">\[L(\lambda_i, \mu) = \sigma_E^2 + 2\mu \left( \sum_{i=1}^{n} \lambda_i - 1 \right)\]</span></p>
+<p>其中，<span class="math inline">\(\mu\)</span> 为拉格朗日乘数。</p>
+</section>
+<section id="普通克里金方程组" class="level4">
+<h4 class="anchored" data-anchor-id="普通克里金方程组">4. 普通克里金方程组</h4>
+<p>为了求得极小值，将目标函数 <span class="math inline">\(L\)</span> 分别对所有的权重 <span class="math inline">\(\lambda_i\)</span> 和拉格朗日乘数 <span class="math inline">\(\mu\)</span> 求偏导数，并令偏导数等于零：</p>
+<p><span class="math display">\[\frac{\partial L}{\partial \lambda_i} = 0 \quad (i = 1, 2, \dots, n)\]</span></p>
+<p><span class="math display">\[\frac{\partial L}{\partial \mu} = 0\]</span></p>
+<p>经过化简，得到普通克里金方程组：</p>
+<p><span class="math display">\[\begin{cases}
+\sum_{j=1}^{n} \lambda_j \gamma(x_i, x_j) + \mu = \gamma(x_i, x_0) &amp; (i = 1, 2, \dots, n) \\
+\sum_{i=1}^{n} \lambda_i = 1 &amp;
+\end{cases}\]</span></p>
+<p>在实际的足球空间建模计算中（如本研究中调用的 <code>gstat</code> 核心算法），计算机会将上述方程组转化为矩阵运算形式：</p>
+<p><span class="math display">\[\begin{bmatrix}
+\gamma(x_1, x_1) &amp; \cdots &amp; \gamma(x_1, x_n) &amp; 1 \\
+\vdots &amp; \ddots &amp; \vdots &amp; \vdots \\
+\gamma(x_n, x_1) &amp; \cdots &amp; \gamma(x_n, x_n) &amp; 1 \\
+1 &amp; \cdots &amp; 1 &amp; 0
+\end{bmatrix}
+\begin{bmatrix}
+\lambda_1 \\ \vdots \\ \lambda_n \\ \mu
+\end{bmatrix}
+=
+\begin{bmatrix}
+\gamma(x_1, x_0) \\ \vdots \\ \gamma(x_n, x_0) \\ 1
+\end{bmatrix}\]</span></p>
+<p>通过对左侧的半方差矩阵求逆，即可解出每一个已知触球点对未知网格点的最优权重 <span class="math inline">\(\lambda_i\)</span>。</p>
+</section>
+<section id="克里金方差与数据置信度量化" class="level4">
+<h4 class="anchored" data-anchor-id="克里金方差与数据置信度量化">5. 克里金方差与数据置信度量化</h4>
+<p>将求解出的最优权重 <span class="math inline">\(\lambda_i\)</span> 代回估计方差公式中，即可求得克里金预测方差（<span class="math inline">\(\sigma_K^2\)</span>）：</p>
+<p><span class="math display">\[\sigma_K^2 = \sum_{i=1}^{n} \lambda_i \gamma(x_i, x_0) + \mu\]</span></p>
+<p>在足球战术分析中，克里金方差具有颠覆性的实际意义。传统基于核密度（KDE）的热点图只能给出预测的绝对值，却无法告诉你这个预测结果的偏移可能性。而克里金模型输出的 <span class="math inline">\(\sigma_K^2\)</span> 完美弥补了这一空白：当 <span class="math inline">\(\sigma_K^2\)</span> 较小时，说明该区域附近的真实触球样本点丰富且规律性强，战术价值的预测可信度极高；反之，若某一边角区域 <span class="math inline">\(\sigma_K^2\)</span> 畸高，模型则会在数学上发出预警——该区域的热度预测可能因样本稀疏而存在较大误差。这种对预测不确定性的量化，为足球教练组的实战排兵布阵确立了科学的风险评估边界。</p>
+</section>
+</section>
+</section>
+<section id="足球球权战术价值评价体系z-模型的构建" class="level2">
+<h2 class="anchored" data-anchor-id="足球球权战术价值评价体系z-模型的构建">3.3 足球球权战术价值评价体系（Z 模型）的构建</h2>
+<p>本研究的根本创新在于将原本离散、无属性的坐标点，转化为具有明确战术指向的“价值点”。为此，本研究摒弃了单一维度的评价方式，构建了多维度的“球权战术价值（<span class="math inline">\(Z\)</span>）”乘法模型。在正式确立模型公式之前，本节将首先从战术理论与客观数据双重维度，论证核心特征选取的科学性。</p>
+<section id="模型特征选择的理论与数据依据" class="level3">
+<h3 class="anchored" data-anchor-id="模型特征选择的理论与数据依据">3.3.1 模型特征选择的理论与数据依据</h3>
+<p>本研究的 Z 模型包含四个核心维度：动作类型、空间位置、防守压迫与传球高度。其选取依据不仅立足于前沿的运动科学理论，更得到了德甲 15/16 赛季全样本数据的客观支撑。</p>
+<section id="动作类型维度-s_base-的选取依据" class="level4">
+<h4 class="anchored" data-anchor-id="动作类型维度-s_base-的选取依据">1. 动作类型维度 (<span class="math inline">\(S_{base}\)</span>) 的选取依据</h4>
+<p><strong>理论支持：基于马尔可夫链的“动作状态转换”理论</strong> 在现代足球量化分析中，Decroos 等人 (2019) 提出的 VAEP (Valuing Actions by Estimating Probabilities) 框架确立了基于事件驱动（Event-driven）的动作评价范式。该理论将足球比赛视为一系列离散动作的状态转移过程，证明了传球、射门、防守解围等不同行为对预期进球（xG）的贡献度存在显著的层级差异。本研究设定的基础动作分（<span class="math inline">\(S_{base}\)</span>）正是基于这一状态转换理论，旨在对不同技术动作赋予其天然的期望收益权重。</p>
+<p><strong>数据支持：定位球的高转化率溢价</strong> 传统基于欧氏距离的空间模型往往会严重低估角球的价值，因为其发生地位于球场四个角落（远离球门中心）。然而，对德甲数据的实证检验推翻了这一直觉：</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/%E5%BE%B7%E7%94%B215_16%E8%B5%9B%E5%AD%A3%E4%BC%A0%E7%90%83%E5%8A%A9%E6%94%BB%E7%8E%87%E5%AF%B9%E6%AF%94.png?raw=true" class="img-fluid figure-img"></p>
+<figcaption>德甲射门密度分布</figcaption>
+</figure>
+</div>
+<p>数据结果显示，角球直接形成射门助攻（Shot Assist）的概率远高于运动战常规传球。这证明了定位球具有跨越空间距离直接威胁球门的能力，为后续模型中赋予定位球极高的基础分与空间豁免权提供了坚实依据。</p>
+</section>
+<section id="空间位置维度-w_space-的选取依据" class="level4">
+<h4 class="anchored" data-anchor-id="空间位置维度-w_space-的选取依据">2. 空间位置维度 (<span class="math inline">\(W_{space}\)</span>) 的选取依据</h4>
+<p><strong>理论支持：空间效能与“Zone 14”理论</strong> 足球场上的空间效能并非均匀分布。Horn 等人 (2002) 提出的‘Zone 14（即大禁区前沿中路区域）’理论指出，在该区域的有效触球与最终进球转化率呈高度正相关。同时，Fernandez 与 Bornn (2018) 的开阔空间模型也证实了进攻向心力对防守阵型的破坏作用。基于此，本模型引入空间坐标，构建了‘横向向心与纵向推进’的双维空间权重。</p>
+<p><strong>数据验证：射门事件的二维核密度分布</strong> 为验证上述理论，本研究提取全赛季射门数据并绘制了空间密度分布图：</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/%E5%BE%B7%E7%94%B215_16%E8%B5%9B%E5%AD%A3%E5%B0%84%E9%97%A8%E5%AF%86%E5%BA%A6.png?raw=true" class="img-fluid figure-img"></p>
+<figcaption>德甲射门密度分布</figcaption>
+</figure>
+</div>
+<p>如核密度图所示，绝对得分机会高度向心聚拢于对方禁区中路（<span class="math inline">\(X &gt; 100, Y \in [30, 50]\)</span>）。这在统计学上完美印证了“向心推进”的战术溢价规律。</p>
+</section>
+<section id="防守压迫维度-c_pressure-的选取依据" class="level4">
+<h4 class="anchored" data-anchor-id="防守压迫维度-c_pressure-的选取依据">3. 防守压迫维度 (<span class="math inline">\(C_{pressure}\)</span>) 的选取依据</h4>
+<p><strong>理论支持：生态动力学中的“约束限制”理论</strong> 运动生态动力学（Ecological Dynamics）认为，运动员的决策和动作价值不能脱离环境约束（Constraints）。传统的数据统计存在“数据欺骗性”——后卫在无压力下的横传与中场在被包夹下的出球，其战术难度截然不同。StatsBomb 数据集率先引入的“受迫（Under Pressure）”标签，使得剥离“无效控球”成为可能。</p>
+<p><strong>数据验证：防守压力下的失误率激增</strong></p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pressure_stats <span class="ot">&lt;-</span> full_season_cleaned <span class="sc">%&gt;%</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">is_error =</span> <span class="fu">ifelse</span>(type.name <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Miscontrol"</span>, <span class="st">"Dispossessed"</span>), <span class="dv">1</span>, <span class="dv">0</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(under_pressure) <span class="sc">%&gt;%</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">total_actions =</span> <span class="fu">n</span>(),</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">error_count =</span> <span class="fu">sum</span>(is_error),</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">error_rate =</span> error_count <span class="sc">/</span> total_actions</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">under_pressure =</span> <span class="fu">ifelse</span>(under_pressure, <span class="st">"受压迫 (Under Pressure)"</span>, <span class="st">"无压迫 (Free)"</span>))</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># 柱状图可视化 (代码略，详见附件)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>统计证实，受压迫状态下的技术失误率呈倍数级增加。基于“风险与收益对等”法则，在极端防守约束下完成的高难度战术动作理应获得溢价补偿，这为设定压力系数提供了实证支撑。</p>
+</section>
+<section id="传球高度维度-q_quality-的选取依据" class="level4">
+<h4 class="anchored" data-anchor-id="传球高度维度-q_quality-的选取依据">4. 传球高度维度 (<span class="math inline">\(Q_{quality}\)</span>) 的选取依据</h4>
+<p><strong>理论支持：瓜迪奥拉的“地面控制”战术哲学</strong> 本研究的实证对象为 15/16 赛季的德甲联赛（瓜迪奥拉执教拜仁慕尼黑的巅峰时期）。现代传控足球的战术哲学极度强调对球权的绝对控制，而地面传球（Ground Pass）相比于高空球（High Pass）拥有更高的球权保留率和更低的失误方差。因此，引入传球高度作为控球质量修正参数（<span class="math inline">\(Q_{quality}\)</span>），是对赛事时代背景与主流战术理念的客观还原。</p>
+</section>
+</section>
+<section id="z-模型的多维特征乘法构建" class="level3">
+<h3 class="anchored" data-anchor-id="z-模型的多维特征乘法构建">3.3.2 Z 模型的多维特征乘法构建</h3>
+<p>在确立上述特征维度的合理性后，本研究采用多维特征乘法模型构建最终的球权战术价值指标 <span class="math inline">\(Z\)</span>。公式定义如下：</p>
+<p><span class="math display">\[Z = S_{base} \times W_{space}(x, y) \times C_{pressure} \times Q_{quality}\]</span></p>
+<p>各子模块的具体数学设定如下：</p>
+<section id="基础动作分-s_base" class="level4">
+<h4 class="anchored" data-anchor-id="基础动作分-s_base">1. 基础动作分 (<span class="math inline">\(S_{base}\)</span>)</h4>
+<p>模型依据战术影响程度，对不同类型的技术动作进行固有威胁等级赋值（详见表2-1）。特别设立了针对失误行为的负分机制。</p>
+<p><strong>表2-1 基础动作战术价值等级赋值表</strong></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>动作类型 (Event Type)</th>
+<th><span class="math inline">\(S_{base}\)</span> 分值</th>
+<th>战术含义</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>射门 / 关键扑救 (Shot / Save)</td>
+<td>10.0</td>
+<td>直接改变比分或阻止得分</td>
+</tr>
+<tr class="even">
+<td>助攻 / 关键传球 (Key Pass)</td>
+<td>8.0</td>
+<td>直接创造射门机会</td>
+</tr>
+<tr class="odd">
+<td>门线解围 / 封堵 (Clearance / Block)</td>
+<td>8.0</td>
+<td>破坏绝对得分机会</td>
+</tr>
+<tr class="even">
+<td>角球 (Corner)</td>
+<td>7.0</td>
+<td>[特例]高价值定位球机会</td>
+</tr>
+<tr class="odd">
+<td>任意球 / 拦截 / 抢断 / 过人</td>
+<td>6.0</td>
+<td>夺回球权或破坏防守结构</td>
+</tr>
+<tr class="even">
+<td>对抗 / 施压 / 护球</td>
+<td>4.0</td>
+<td>有效的战术物理对抗</td>
+</tr>
+<tr class="odd">
+<td>普通传球 / 推进</td>
+<td>1.0</td>
+<td>维持球权周转</td>
+</tr>
+<tr class="even">
+<td>普通动作 (其他)</td>
+<td>1.0</td>
+<td>常规触球</td>
+</tr>
+<tr class="odd">
+<td>失误 (Error/Loss)</td>
+<td>-3.0</td>
+<td>丢失球权或战术执行失败</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="多维空间权重-w_space" class="level4">
+<h4 class="anchored" data-anchor-id="多维空间权重-w_space">2. 多维空间权重 (<span class="math inline">\(W_{space}\)</span>)</h4>
+<p>该模块综合了纵向推进 (<span class="math inline">\(X\)</span>) 和横向向心 (<span class="math inline">\(Y\)</span>) 的位置价值。首先定义 Y 轴向心度函数 <span class="math inline">\(C_{y}(y)\)</span>，其中 <span class="math inline">\(y \in [0, 80]\)</span>：</p>
+<p><span class="math display">\[C_{y}(y) = 1 - \frac{|y - 40|}{40}\]</span></p>
+<p>该函数确保了中轴线 (<span class="math inline">\(y=40\)</span>) 取得最高分 1.0，向两侧边线线性递减至 0。</p>
+<p>随后，根据动作性质将 <span class="math inline">\(W_{space}\)</span> 划分为五种应用情境：</p>
+<ul>
+<li><strong>情形 A：角球 (Corner)</strong> —— [特权豁免]：<span class="math inline">\(W_{space} = 2.5\)</span>（赋予理论最高权重，无视其边路发球的位置劣势）。</li>
+<li><strong>情形 B：任意球 (Free Kick)</strong> —— [补偿豁免]：<span class="math inline">\(W_{space} = 2.0\)</span>。</li>
+<li><strong>情形 C：防守动作</strong> —— 目标为保护己方球门：</li>
+</ul>
+<p><span class="math display">\[W_{space}(x, y) = 1 + \underbrace{\frac{120 - x}{120}}_{\text{后场保护}} + \underbrace{0.5 \times C_{y}(y)}_{\text{中路防守}}\]</span></p>
+<ul>
+<li><strong>情形 D：进攻动作</strong> —— 目标为攻击对方球门：</li>
+</ul>
+<p><span class="math display">\[W_{space}(x, y) = 1 + \underbrace{\frac{x}{120}}_{\text{前场推进}} + \underbrace{0.5 \times C_{y}(y)}_{\text{中路渗透}}\]</span></p>
+<ul>
+<li><strong>情形 E：失误 (Errors)</strong> —— <span class="math inline">\(W_{space} = 0.5\)</span>（进行空间降维，防止在对方危险区域失误反而获得高分变异）。</li>
+</ul>
+</section>
+<section id="压力情景系数-c_pressure" class="level4">
+<h4 class="anchored" data-anchor-id="压力情景系数-c_pressure">3. 压力情景系数 (<span class="math inline">\(C_{pressure}\)</span>)</h4>
+<p>基于前文验证的对抗高风险属性，设定二元分段函数奖励抗压迫操作：</p>
+<p><span class="math display">\[C_{pressure} = \begin{cases} 1.5, &amp; \text{if Under Pressure = TRUE} \\ 1.0, &amp; \text{if Under Pressure = FALSE} \end{cases}\]</span></p>
+</section>
+<section id="控球质量修正-q_quality" class="level4">
+<h4 class="anchored" data-anchor-id="控球质量修正-q_quality">4. 控球质量修正 (<span class="math inline">\(Q_{quality}\)</span>)</h4>
+<p>针对传球事件，以地面控制作为最优解进行质量修正：</p>
+<p><span class="math display">\[Q_{quality} = \begin{cases} 0.8, &amp; \text{if High Pass (高空球)} \\ 0.9, &amp; \text{if Low Pass (半高球)} \\ 1.0, &amp; \text{if Ground Pass (地面球) or Non-Pass Actions} \end{cases}\]</span></p>
+</section>
+</section>
+<section id="模型算法的程序实现与逻辑校验" class="level3">
+<h3 class="anchored" data-anchor-id="模型算法的程序实现与逻辑校验">3.3.3 模型算法的程序实现与逻辑校验</h3>
+<p>基于上述严密的数学设定，本研究利用 R 语言中的 <code>dplyr</code> 数据操作框架完成了 Z 模型的程序化落地。核心代码通过 <code>case_when</code> 嵌套逻辑，精确计算了全赛季每一条事件记录的合成最终价值 <span class="math inline">\(Z\)</span>：</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>final_model_data <span class="ot">&lt;-</span> full_season_cleaned <span class="sc">%&gt;%</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. 识别并归类定位球等特殊事件</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">custom_type =</span> <span class="fu">case_when</span>(</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>      type.name <span class="sc">==</span> <span class="st">"Pass"</span> <span class="sc">&amp;</span> pass.type.name <span class="sc">==</span> <span class="st">"Corner"</span> <span class="sc">~</span> <span class="st">"Corner"</span>,</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>      type.name <span class="sc">==</span> <span class="st">"Pass"</span> <span class="sc">&amp;</span> pass.type.name <span class="sc">==</span> <span class="st">"Free Kick"</span> <span class="sc">~</span> <span class="st">"Free Kick"</span>,</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> type.name</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. 计算向心度与基础分</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">centrality_score =</span> <span class="dv">1</span> <span class="sc">-</span> (<span class="fu">abs</span>(location.y <span class="sc">-</span> <span class="dv">40</span>) <span class="sc">/</span> <span class="dv">40</span>),</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">s_base =</span> <span class="fu">case_when</span>(</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Shot"</span>, <span class="st">"Goal Keeper"</span>) <span class="sc">~</span> <span class="dv">10</span>,</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">==</span> <span class="st">"Corner"</span> <span class="sc">~</span> <span class="dv">7</span>, </span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">==</span> <span class="st">"Free Kick"</span> <span class="sc">~</span> <span class="dv">6</span>,</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>      type.name <span class="sc">==</span> <span class="st">"Pass"</span> <span class="sc">&amp;</span> pass.shot_assist <span class="sc">==</span> <span class="cn">TRUE</span> <span class="sc">~</span> <span class="dv">8</span>,</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Clearance"</span>, <span class="st">"Block"</span>) <span class="sc">~</span> <span class="dv">8</span>,</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Interception"</span>, <span class="st">"Ball Recovery"</span>, <span class="st">"Foul Won"</span>, <span class="st">"Dribble"</span>) <span class="sc">~</span> <span class="dv">6</span>,</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Duel"</span>, <span class="st">"Pressure"</span>, <span class="st">"Shield"</span>) <span class="sc">~</span> <span class="dv">4</span>,</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">%in%</span> error_types <span class="sc">~</span> <span class="sc">-</span><span class="dv">3</span>,</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="dv">1</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 3. 计算多维空间权重</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">w_space =</span> <span class="fu">case_when</span>(</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">==</span> <span class="st">"Corner"</span> <span class="sc">~</span> <span class="fl">2.5</span>,</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">==</span> <span class="st">"Free Kick"</span> <span class="sc">~</span> <span class="fl">2.0</span>,</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">%in%</span> error_types <span class="sc">~</span> <span class="fl">0.5</span>,</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">%in%</span> def_types <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> ((<span class="dv">120</span> <span class="sc">-</span> location.x) <span class="sc">/</span> <span class="dv">120</span>) <span class="sc">+</span> (<span class="fl">0.5</span> <span class="sc">*</span> centrality_score),</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> (location.x <span class="sc">/</span> <span class="dv">120</span>) <span class="sc">+</span> (<span class="fl">0.5</span> <span class="sc">*</span> centrality_score)</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 4. 压力系数与质量系数修正</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">c_pressure =</span> <span class="fu">ifelse</span>(under_pressure <span class="sc">==</span> <span class="cn">TRUE</span>, <span class="fl">1.5</span>, <span class="fl">1.0</span>),</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">q_height =</span> <span class="fu">case_when</span>(</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>      type.name <span class="sc">==</span> <span class="st">"Pass"</span> <span class="sc">&amp;</span> pass.height.name <span class="sc">==</span> <span class="st">"High Pass"</span> <span class="sc">~</span> <span class="fl">0.8</span>,</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>      type.name <span class="sc">==</span> <span class="st">"Pass"</span> <span class="sc">&amp;</span> pass.height.name <span class="sc">==</span> <span class="st">"Low Pass"</span> <span class="sc">~</span> <span class="fl">0.9</span>,</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fl">1.0</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 5. 合成最终战术价值 Z</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>    <span class="at">value_z =</span> s_base <span class="sc">*</span> w_space <span class="sc">*</span> c_pressure <span class="sc">*</span> q_height</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(value_z))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>为确保特征赋值与预期设计一致，模型执行了分组均值校验（Group Means Check）：</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 检查核心分组均值是否符合战术逻辑</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>final_model_data <span class="sc">%&gt;%</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(custom_type) <span class="sc">%&gt;%</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">Avg_Base_Score =</span> <span class="fu">mean</span>(s_base),</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">Avg_Space_Weight =</span> <span class="fu">mean</span>(w_space), </span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">Avg_Total_Z =</span> <span class="fu">mean</span>(value_z),</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">Count =</span> <span class="fu">n</span>()</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(custom_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Corner"</span>, <span class="st">"Free Kick"</span>, <span class="st">"Pass"</span>, <span class="st">"Shot"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(Avg_Total_Z))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>检验结果证实，不同动作类型合成的终极战术价值 <span class="math inline">\(Z\)</span> 呈现出预期中的梯次分布，至此，克里金插值分析的核心输入变量已准备就绪。</p>
+</section>
+</section>
+</section>
+<section id="代码" class="level1">
+<h1>代码</h1>
+<section id="数据预处理" class="level2">
+<h2 class="anchored" data-anchor-id="数据预处理">数据预处理</h2>
+<section id="包加载" class="level3">
+<h3 class="anchored" data-anchor-id="包加载">包加载</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">require</span>(<span class="st">"devtools"</span>)) <span class="fu">install.packages</span>(<span class="st">"devtools"</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">"statsbomb/StatsBombR"</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">"tidyverse"</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">"showtext"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(StatsBombR)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gstat)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sp)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(showtext)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="fu">showtext_auto</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="数据获取" class="level3">
+<h3 class="anchored" data-anchor-id="数据获取">数据获取</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 获取 15/16 德甲赛事信息</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>comp <span class="ot">&lt;-</span> <span class="fu">FreeCompetitions</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(competition_name <span class="sc">==</span> <span class="st">"1. Bundesliga"</span>, season_name <span class="sc">==</span> <span class="st">"2015/2016"</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>matches <span class="ot">&lt;-</span> <span class="fu">FreeMatches</span>(comp)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="单场数据查看" class="level3">
+<h3 class="anchored" data-anchor-id="单场数据查看">单场数据查看</h3>
+<p>大致查看数据的结构</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>one_match_metadata <span class="ot">&lt;-</span> matches[<span class="dv">1</span>, ] </span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(one_match_metadata<span class="sc">$</span>home_team.home_team_name, <span class="st">"VS"</span>, one_match_metadata<span class="sc">$</span>away_team.away_team_name))</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>single_match_events <span class="ot">&lt;-</span> <span class="fu">get.matchFree</span>(one_match_metadata)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="全赛季数据查看" class="level3">
+<h3 class="anchored" data-anchor-id="全赛季数据查看">全赛季数据查看</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 循环抓取全赛季原始数据</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>all_events_list <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(matches)) {</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tryCatch</span>({</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    temp_events <span class="ot">&lt;-</span> <span class="fu">get.matchFree</span>(matches[i,])</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    all_events_list[[i]] <span class="ot">&lt;-</span> temp_events</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  }, <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"第"</span>, i, <span class="st">"场抓取失败，跳过..."</span>))</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="co"># 合并</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>all_1516_events <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(all_events_list)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 基础清洗 (这一步很重要，加上了 location.x/y 等基础列)</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>all_1516_events <span class="ot">&lt;-</span> <span class="fu">allclean</span>(all_1516_events)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"总行数:"</span>, <span class="fu">nrow</span>(all_1516_events)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="数据清洗" class="level3">
+<h3 class="anchored" data-anchor-id="数据清洗">数据清洗</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>full_season_cleaned <span class="ot">&lt;-</span> all_1516_events <span class="sc">%&gt;%</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># 位置数据分离x和y</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">allclean</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># 剔除无效事件</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>type.name <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Starting XI"</span>, <span class="st">"Half Start"</span>, <span class="st">"Half End"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># 修正压迫数据</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">under_pressure =</span> <span class="fu">replace_na</span>(under_pressure, <span class="cn">FALSE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># 筛选出所需条件</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    id, match_id, minute, second,  <span class="co"># 基础赛事信息</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    team.name, player.name, position.name, <span class="co"># 球队、球员、场上位置</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    location.x, location.y, <span class="co"># 位置信息</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    type.id, type.name, <span class="co"># 技术动作</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>    under_pressure, <span class="co"># 压迫情况</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">starts_with</span>(<span class="st">"pass.height"</span>), <span class="co"># 传球高度</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 特殊情况</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>    pass.type.name,       <span class="co"># 识别角球/任意球</span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>    pass.shot_assist,     <span class="co"># 识别关键传球(助攻)</span></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>    dribble.outcome.name <span class="co"># 识别过人是否成功</span></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>  <span class="co"># 排序</span></span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(match_id, minute, second)</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">names</span>(full_season_cleaned))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="数据概览" class="level3">
+<h3 class="anchored" data-anchor-id="数据概览">数据概览</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 维度查看</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">dim</span>(full_season_cleaned))</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 结构查看</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(full_season_cleaned)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="保存为cvs" class="level3">
+<h3 class="anchored" data-anchor-id="保存为cvs">保存为cvs</h3>
+<p>避免重复运行循环抓去</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>file_name <span class="ot">&lt;-</span> <span class="st">"Bundesliga_1516_Events.csv"</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(full_season_cleaned, file_name, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+<section id="模型建立" class="level2">
+<h2 class="anchored" data-anchor-id="模型建立">模型建立</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>full_season_cleaned <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"data/Bundesliga_1516_Events.csv"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="一构建核心变量-z" class="level3">
+<h3 class="anchored" data-anchor-id="一构建核心变量-z">一、构建核心变量 Z</h3>
+<section id="特征选择依据" class="level4">
+<h4 class="anchored" data-anchor-id="特征选择依据">特征选择依据</h4>
+<section id="理论支持" class="level5">
+<h5 class="anchored" data-anchor-id="理论支持">理论支持</h5>
+</section>
+<section id="基于马尔可夫链的动作状态转换理论-s_base" class="level5">
+<h5 class="anchored" data-anchor-id="基于马尔可夫链的动作状态转换理论-s_base">基于马尔可夫链的“动作状态转换”理论 (<span class="math inline">\(S_{base}\)</span>)</h5>
+<p>为什么选“动作类型”？</p>
+<p>在现代足球量化分析中，Decroos 等人 (2019) 提出的 VAEP (Valuing Actions by Estimating Probabilities) 框架确立了基于事件驱动（Event-driven）的动作评价范式。该理论将足球比赛视为一系列离散动作的状态转移过程，证明了传球、射门、防守解围等不同行为对预期进球（xG）的贡献度存在显著的层级差异。本研究设定的基础动作分（<span class="math inline">\(S_{base}\)</span>）正是基于这一状态转换理论，对不同技术动作赋予天然的期望收益权重。</p>
+</section>
+<section id="空间效能与zone-14理论-w_space" class="level5">
+<h5 class="anchored" data-anchor-id="空间效能与zone-14理论-w_space">空间效能与“Zone 14”理论 (<span class="math inline">\(W_{space}\)</span>)</h5>
+<p>为什么选“空间坐标 X, Y”？</p>
+<p>足球场上的空间效能并非均匀分布。Horn 等人 (2002) 提出的‘Zone 14（即大禁区前沿中路区域）’理论指出，在该区域的有效触球与最终进球转化率呈高度正相关。同时，Fernandez 与 Bornn (2018) 的开阔空间模型也证实了进攻向心力对防守阵型的破坏作用 。基于此，本模型引入空间坐标，构建了‘横向向心与纵向推进’的双维空间权重（<span class="math inline">\(W_{space}\)</span>）。</p>
+</section>
+<section id="生态动力学中的约束限制理论-c_pressure" class="level5">
+<h5 class="anchored" data-anchor-id="生态动力学中的约束限制理论-c_pressure">生态动力学中的“约束限制”理论 (<span class="math inline">\(C_{pressure}\)</span>)</h5>
+<p>为什么选“受压迫状态”？</p>
+<p>运动生态动力学（Ecological Dynamics）认为，运动员的决策和动作价值不能脱离环境约束（Constraints）。传统的数据统计（如单纯的传球成功率）存在“数据欺骗性”——后卫在无压力下的横传与中场在被包夹下的出球，其战术价值截然不同。StatsBomb 数据集是业内率先引入“受迫（Under Pressure）”标签的系统，本模型利用这一标签构建压力系数（<span class="math inline">\(C_{pressure}\)</span>），是为了剥离“无效控球”，重奖在极端防守约束下完成的高难度战术动作。</p>
+</section>
+<section id="理论支持四瓜迪奥拉的地面控制战术哲学-q_quality" class="level5">
+<h5 class="anchored" data-anchor-id="理论支持四瓜迪奥拉的地面控制战术哲学-q_quality">理论支持四：瓜迪奥拉的“地面控制”战术哲学 (<span class="math inline">\(Q_{quality}\)</span>)</h5>
+<p>为什么选“传球高度”？</p>
+<p>本研究的实证对象为 15/16 赛季的德甲联赛（瓜迪奥拉执教拜仁慕尼黑时期）。现代传控足球的战术哲学极度强调对球权的绝对控制，而地面传球（Ground Pass）相比于高空球（High Pass）拥有更高的球权保留率和更低的失误方差。因此，引入传球高度作为控球质量修正参数（<span class="math inline">\(Q_{quality}\)</span>），是对赛事时代背景与主流战术理念的客观反映。</p>
+</section>
+<section id="数据支持" class="level5">
+<h5 class="anchored" data-anchor-id="数据支持">数据支持</h5>
+<section id="射门" class="level6">
+<h6 class="anchored" data-anchor-id="射门">1）射门</h6>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>p_final_style <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(shots_data, <span class="fu">aes</span>(<span class="at">x =</span> location.x, <span class="at">y =</span> location.y)) <span class="sc">+</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_density_2d</span>(</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">fill =</span> ..level..), </span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">geom =</span> <span class="st">"polygon"</span>, </span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="cn">NA</span>,</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">linewidth =</span> <span class="dv">0</span>,</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">alpha =</span> <span class="dv">1</span>, </span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">bins =</span> <span class="dv">30</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_viridis_c</span>(<span class="at">option =</span> <span class="st">"magma"</span>, <span class="at">name =</span> <span class="st">"密度"</span>) <span class="sc">+</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">0</span>, <span class="at">xmax=</span><span class="dv">120</span>, <span class="at">ymin=</span><span class="dv">0</span>, <span class="at">ymax=</span><span class="dv">80</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">linewidth=</span><span class="fl">0.3</span>) <span class="sc">+</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"segment"</span>, <span class="at">x=</span><span class="dv">60</span>, <span class="at">xend=</span><span class="dv">60</span>, <span class="at">y=</span><span class="dv">0</span>, <span class="at">yend=</span><span class="dv">80</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">linewidth=</span><span class="fl">0.3</span>) <span class="sc">+</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"point"</span>, <span class="at">x=</span><span class="dv">60</span>, <span class="at">y=</span><span class="dv">40</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">1.5</span>) <span class="sc">+</span></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">0</span>, <span class="at">xmax=</span><span class="dv">18</span>, <span class="at">ymin=</span><span class="dv">18</span>, <span class="at">ymax=</span><span class="dv">62</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">linewidth=</span><span class="fl">0.3</span>) <span class="sc">+</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">102</span>, <span class="at">xmax=</span><span class="dv">120</span>, <span class="at">ymin=</span><span class="dv">18</span>, <span class="at">ymax=</span><span class="dv">62</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">linewidth=</span><span class="fl">0.3</span>) <span class="sc">+</span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_fixed</span>(<span class="at">ratio =</span> <span class="dv">1</span>, <span class="at">xlim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">121</span>), <span class="at">ylim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">81</span>), <span class="at">expand =</span> <span class="cn">FALSE</span>) <span class="sc">+</span></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_void</span>() <span class="sc">+</span> </span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">32</span>, <span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">hjust =</span> <span class="fl">0.5</span>, <span class="at">margin =</span> <span class="fu">margin</span>(<span class="at">t=</span><span class="dv">5</span>, <span class="at">b =</span> <span class="dv">5</span>)),</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.subtitle =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">18</span>, <span class="at">hjust =</span> <span class="fl">0.5</span>, <span class="at">color =</span> <span class="st">"grey20"</span>, <span class="at">margin =</span> <span class="fu">margin</span>(<span class="at">b =</span> <span class="dv">10</span>)),</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.title =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">14</span>, <span class="at">face =</span> <span class="st">"bold"</span>),</span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>),</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.key.height =</span> <span class="fu">unit</span>(<span class="fl">0.8</span>, <span class="st">"cm"</span>), </span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.background =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="st">"white"</span>, <span class="at">color =</span> <span class="cn">NA</span>),</span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.margin =</span> <span class="fu">margin</span>(<span class="dv">10</span>, <span class="dv">10</span>, <span class="dv">10</span>, <span class="dv">10</span>) </span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"德甲 15/16 赛季射门密度"</span>, <span class="co"># 缩短标题让字显得更大</span></span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"高密度区集中于禁区中路"</span></span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a><span class="co"># 保存</span></span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(</span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>  <span class="at">filename =</span> <span class="st">"output_figures/德甲15_16赛季射门密度.png"</span>, </span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>  <span class="at">plot =</span> p_final_style, </span>
+<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a>  <span class="at">width =</span> <span class="dv">5</span>,   </span>
+<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a>  <span class="at">height =</span> <span class="dv">4</span>,</span>
+<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a>  <span class="at">units =</span> <span class="st">"in"</span>, </span>
+<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a>  <span class="at">dpi =</span> <span class="dv">300</span></span>
+<span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="压迫" class="level6">
+<h6 class="anchored" data-anchor-id="压迫">2）压迫</h6>
+<p>计算受压迫与不受压迫状态下的“失误率”</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>p2 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(pressure_stats, <span class="fu">aes</span>(<span class="at">x =</span> under_pressure, <span class="at">y =</span> error_rate, <span class="at">fill =</span> under_pressure)) <span class="sc">+</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">width =</span> <span class="fl">0.6</span>) <span class="sc">+</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">percent_format</span>(), </span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>                     <span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">mult =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.1</span>))) <span class="sc">+</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"受压迫 (Pressure)"</span> <span class="ot">=</span> <span class="st">"#B22222"</span>, <span class="st">"无压迫 (Free)"</span> <span class="ot">=</span> <span class="st">"#4682B4"</span>)) <span class="sc">+</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">20</span>) <span class="sc">+</span> </span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">28</span>, <span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">hjust =</span> <span class="fl">0.5</span>, <span class="at">margin =</span> <span class="fu">margin</span>(<span class="at">t=</span><span class="dv">10</span>, <span class="at">b =</span> <span class="dv">15</span>)),</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">20</span>, <span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">color =</span> <span class="st">"black"</span>),</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">14</span>, <span class="at">color =</span> <span class="st">"grey30"</span>),</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.title =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid.major.x =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid.minor.x =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid.major.y =</span> <span class="fu">element_line</span>(<span class="at">color =</span> <span class="st">"grey90"</span>, <span class="at">linewidth =</span> <span class="fl">0.5</span>),</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid.minor.y =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.background =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.background =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="st">"white"</span>, <span class="at">color =</span> <span class="cn">NA</span>),</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.margin =</span> <span class="fu">margin</span>(<span class="dv">15</span>, <span class="dv">20</span>, <span class="dv">15</span>, <span class="dv">20</span>)</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"不同防守压力下的失误率对比"</span>)</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="st">"output_figures/德甲15_16赛季压力失误率对比.png"</span>, <span class="at">plot =</span> p2, <span class="at">width =</span> <span class="dv">5</span>, <span class="at">height =</span> <span class="fl">3.8</span>, <span class="at">units =</span> <span class="st">"in"</span>, <span class="at">dpi =</span> <span class="dv">300</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="定位球" class="level6">
+<h6 class="anchored" data-anchor-id="定位球">3）定位球</h6>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>assist_stats <span class="ot">&lt;-</span> full_season_cleaned <span class="sc">%&gt;%</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(type.name <span class="sc">==</span> <span class="st">"Pass"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">pass_type =</span> <span class="fu">case_when</span>(</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    pass.type.name <span class="sc">==</span> <span class="st">"Corner"</span> <span class="sc">~</span> <span class="st">"角球"</span>,</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    pass.type.name <span class="sc">==</span> <span class="st">"Free Kick"</span> <span class="sc">~</span> <span class="st">"任意球"</span>,</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"运动战"</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">%&gt;%</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(pass_type) <span class="sc">%&gt;%</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">total_passes =</span> <span class="fu">n</span>(),</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">shot_assists =</span> <span class="fu">sum</span>(pass.shot_assist <span class="sc">==</span> <span class="cn">TRUE</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">assist_rate =</span> shot_assists <span class="sc">/</span> total_passes</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(assist_rate))</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>p3 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(assist_stats, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(pass_type, <span class="sc">-</span>assist_rate), <span class="at">y =</span> assist_rate, <span class="at">fill =</span> pass_type)) <span class="sc">+</span></span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">width =</span> <span class="fl">0.6</span>) <span class="sc">+</span></span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">percent_format</span>(), </span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>                     <span class="at">expand =</span> <span class="fu">expansion</span>(<span class="at">mult =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.1</span>))) <span class="sc">+</span></span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_viridis_d</span>(<span class="at">option =</span> <span class="st">"mako"</span>, <span class="at">begin =</span> <span class="fl">0.3</span>, <span class="at">end =</span> <span class="fl">0.8</span>) <span class="sc">+</span></span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">20</span>) <span class="sc">+</span></span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">28</span>, <span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">hjust =</span> <span class="fl">0.5</span>, <span class="at">margin =</span> <span class="fu">margin</span>(<span class="at">t=</span><span class="dv">10</span>, <span class="at">b =</span> <span class="dv">15</span>)),</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">20</span>, <span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">color =</span> <span class="st">"black"</span>),</span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">14</span>, <span class="at">color =</span> <span class="st">"grey30"</span>),</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.title =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid.major.x =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid.minor.x =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid.major.y =</span> <span class="fu">element_line</span>(<span class="at">color =</span> <span class="st">"grey90"</span>, <span class="at">linewidth =</span> <span class="fl">0.5</span>),</span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid.minor.y =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.background =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.background =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="st">"white"</span>, <span class="at">color =</span> <span class="cn">NA</span>),</span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.margin =</span> <span class="fu">margin</span>(<span class="dv">15</span>, <span class="dv">20</span>, <span class="dv">15</span>, <span class="dv">20</span>)</span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"不同传球类型的射门助攻率"</span>)</span>
+<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="st">"output_figures/德甲15_16赛季传球助攻率对比.png"</span>, <span class="at">plot =</span> p3, <span class="at">width =</span> <span class="dv">5</span>, <span class="at">height =</span> <span class="fl">3.8</span>, <span class="at">units =</span> <span class="st">"in"</span>, <span class="at">dpi =</span> <span class="dv">300</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>传统基于欧氏距离的空间模型往往会严重低估角球的价值，因为其发生地位于球场四个角落。然而，对德甲传球数据的转化率分析显示，角球直接形成射门助攻（Shot Assist）的概率为 <span class="math inline">\(X\%\)</span>，远高于运动战常规传球的 <span class="math inline">\(Y\%\)</span>。这证明了定位球具有跨越空间距离直接威胁球门的能力。故本模型为角球设定了 <span class="math inline">\(S_{base}=7\)</span> 的高基础分以及 <span class="math inline">\(W_{space}=2.5\)</span> 的空间特权豁免，有效纠正了传统模型对定位球价值的低估。</p>
+</section>
+</section>
+</section>
+<section id="第一部份动作因素" class="level4">
+<h4 class="anchored" data-anchor-id="第一部份动作因素">第一部份：动作因素</h4>
+<p>采用多维特征乘法模型，先动作变量的类型查看</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">unique</span>(full_season_cleaned<span class="sc">$</span>type.name)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>增加定位球因素，定义行为动作：</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 定义防守和失误组</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>def_types <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Goal Keeper"</span>, <span class="st">"Clearance"</span>, <span class="st">"Block"</span>, <span class="st">"Interception"</span>, </span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>               <span class="st">"Ball Recovery"</span>, <span class="st">"Pressure"</span>, <span class="st">"Duel"</span>, <span class="st">"Shield"</span>, <span class="st">"Foul Committed"</span>)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>error_types <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Miscontrol"</span>, <span class="st">"Dispossessed"</span>, <span class="st">"Dribbled Past"</span>, <span class="st">"Own Goal Against"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>公式： <span class="math display">\[Z = S_{base} \times W_{space}(x, y) \times C_{pressure} \times Q_{quality}\]</span></p>
+<p>其中：</p>
+<p><span class="math inline">\(S_{base}\)</span>：基础动作分 (Base Action Score)</p>
+<p><span class="math inline">\(W_{space}\)</span>：多维空间权重 (Multi-dimensional Spatial Weight)</p>
+<p><span class="math inline">\(C_{pressure}\)</span>：压力情景系数 (Pressure Coefficient)</p>
+<p><span class="math inline">\(Q_{quality}\)</span>：控球质量修正 (Quality/Height Modifier)</p>
+<p>反映不同战术动作的固有威胁或价值等级赋值：</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">动作类型 (Event Type)</th>
+<th style="text-align: center;"><span class="math inline">\(S_{base}\)</span> 分值</th>
+<th style="text-align: left;">战术含义</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">射门 / 关键扑救 (Shot / Save)</td>
+<td style="text-align: center;">10.0</td>
+<td style="text-align: left;">直接改变比分或阻止得分</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">助攻 / 关键传球 (Key Pass)</td>
+<td style="text-align: center;">8.0</td>
+<td style="text-align: left;">直接创造造射门机会</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">门线解围 / 封堵 (Clearance / Block)</td>
+<td style="text-align: center;">8.0</td>
+<td style="text-align: left;">破坏绝对得分机会</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">角球 (Corner)</td>
+<td style="text-align: center;">7.0</td>
+<td style="text-align: left;">[特例]高价值定位球机会</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">任意球 / 拦截 / 抢断 / 过人</td>
+<td style="text-align: center;">6.0</td>
+<td style="text-align: left;">夺回球权或破坏防守结构</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">构对抗 / 施压 / 护球</td>
+<td style="text-align: center;">4.0</td>
+<td style="text-align: left;">有效的战术对抗</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">普通传球 / 推进</td>
+<td style="text-align: center;">1.0</td>
+<td style="text-align: left;">维持球权周转</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">普通动作 (其他)</td>
+<td style="text-align: center;">1.0</td>
+<td style="text-align: left;">常规触球</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">失误 (Error/Loss)</td>
+<td style="text-align: center;">-3.0</td>
+<td style="text-align: left;">丢失球权或战术失败</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="第二部份空间因素" class="level4">
+<h4 class="anchored" data-anchor-id="第二部份空间因素">第二部份：空间因素</h4>
+<p>多维空间权重 (<span class="math inline">\(W_{space}\)</span>)这是模型的核心，综合了纵向推进 (X) 和 横向向心 (Y) 的价值，并对定位球进行特殊豁免。</p>
+<p>首先定义 Y轴向心度函数 <span class="math inline">\(C_{y}(y)\)</span>，其中 <span class="math inline">\(y \in [0, 80]\)</span>：</p>
+<p><span class="math display">\[C_{y}(y) = 1 - \frac{|y - 40|}{40}\]</span></p>
+<p>(解释：在中轴线 <span class="math inline">\(y=40\)</span> 处取最大值 1.0，在边线处取 0)</p>
+<p>根据动作性质，<span class="math inline">\(W_{space}\)</span> 分为四种情况：</p>
+<p>情形 A：角球 (Corner) —— [特权豁免]</p>
+<p><span class="math display">\[W_{space} = 2.5\]</span></p>
+<p>(直接赋予理论最高权重，无视边路位置劣势)</p>
+<p>情形 B：任意球 (Free Kick) —— [补偿豁免]<span class="math display">\[W_{space} = 2.0\]</span></p>
+<p>情形 C：防守动作 (Defensive Actions) —— 保护己方球门</p>
+<p><span class="math display">\[W_{space}(x, y) = 1 + \underbrace{\frac{120 - x}{120}}_{\text{后场保护}} + \underbrace{0.5 \times C_{y}(y)}_{\text{中路防守}}\]</span></p>
+<p>(解释：越靠近己方底线 <span class="math inline">\(x=0\)</span> 分越高，越靠近中路分越高)</p>
+<p>情形 D：进攻动作 (Offensive Actions) —— 攻击对方球门</p>
+<p><span class="math display">\[W_{space}(x, y) = 1 + \underbrace{\frac{x}{120}}_{\text{前场推进}} + \underbrace{0.5 \times C_{y}(y)}_{\text{中路渗透}}\]</span></p>
+<p>(解释：越靠近对方底线 <span class="math inline">\(x=120\)</span> 分越高，越靠近中路分越高)</p>
+<p>情形 E：失误 (Errors)</p>
+<p><span class="math display">\[W_{space} = 0.5\]</span></p>
+<p>(不进行空间放大，防止在对方禁区失误反而获得高分)</p>
+</section>
+<section id="第三部份压迫情景" class="level4">
+<h4 class="anchored" data-anchor-id="第三部份压迫情景">第三部份：压迫情景</h4>
+<p>压力情景系数 (<span class="math inline">\(C_{pressure}\)</span>)奖励在高强度对抗下的成功操作：</p>
+<p><span class="math display">\[C_{pressure} = \begin{cases} 1.5, &amp; \text{if Under Pressure = TRUE} \\ 1.0, &amp; \text{if Under Pressure = FALSE} \end{cases}\]</span></p>
+</section>
+<section id="第四部份传球高度" class="level4">
+<h4 class="anchored" data-anchor-id="第四部份传球高度">第四部份：传球高度</h4>
+<p>控球质量修正 (<span class="math inline">\(Q_{quality}\)</span>)针对传球动作，基于球的飞行高度进行修正（奖励地面控制）：</p>
+<p><span class="math display">\[Q_{quality} = \begin{cases} 0.8, &amp; \text{if High Pass (高空球)} \\ 0.9, &amp; \text{if Low Pass (半高球)} \\ 1.0, &amp; \text{if Ground Pass (地面球) or Non-Pass Actions} \end{cases}\]</span></p>
+</section>
+<section id="代码实现" class="level4">
+<h4 class="anchored" data-anchor-id="代码实现">代码实现</h4>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>final_model_data <span class="ot">&lt;-</span> full_season_cleaned <span class="sc">%&gt;%</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 特殊情况：角球和任意球</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">custom_type =</span> <span class="fu">case_when</span>(</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>      <span class="co"># 优先识别定位球</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>      type.name <span class="sc">==</span> <span class="st">"Pass"</span> <span class="sc">&amp;</span> pass.type.name <span class="sc">==</span> <span class="st">"Corner"</span> <span class="sc">~</span> <span class="st">"Corner"</span>,</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>      type.name <span class="sc">==</span> <span class="st">"Pass"</span> <span class="sc">&amp;</span> pass.type.name <span class="sc">==</span> <span class="st">"Free Kick"</span> <span class="sc">~</span> <span class="st">"Free Kick"</span>,</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>      <span class="co"># 其他保持原样</span></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> type.name</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Y 轴中心度</span></span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 距离中轴线(40)越近，分数越接近 1；在边线则为 0</span></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">centrality_score =</span> <span class="dv">1</span> <span class="sc">-</span> (<span class="fu">abs</span>(location.y <span class="sc">-</span> <span class="dv">40</span>) <span class="sc">/</span> <span class="dv">40</span>),</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 基础分 S_base (基于custom_type)</span></span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">s_base =</span> <span class="fu">case_when</span>(</span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>      <span class="co"># 射门/扑救</span></span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">==</span> <span class="st">"Shot"</span> <span class="sc">~</span> <span class="dv">10</span>,</span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">==</span> <span class="st">"Goal Keeper"</span> <span class="sc">~</span> <span class="dv">10</span>,</span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a>      <span class="co"># 关键传球/定位球</span></span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>      <span class="co"># 角球</span></span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">==</span> <span class="st">"Corner"</span> <span class="sc">~</span> <span class="dv">7</span>, </span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>      <span class="co"># 任意球</span></span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">==</span> <span class="st">"Free Kick"</span> <span class="sc">~</span> <span class="dv">6</span>,</span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>      <span class="co"># 运动战关键传球</span></span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>      type.name <span class="sc">==</span> <span class="st">"Pass"</span> <span class="sc">&amp;</span> pass.shot_assist <span class="sc">==</span> <span class="cn">TRUE</span> <span class="sc">~</span> <span class="dv">8</span>,</span>
+<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a>      <span class="co"># 关键防守</span></span>
+<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Clearance"</span>, <span class="st">"Block"</span>) <span class="sc">~</span> <span class="dv">8</span>,</span>
+<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Interception"</span>, <span class="st">"Ball Recovery"</span>, <span class="st">"Foul Won"</span>) <span class="sc">~</span> <span class="dv">6</span>,</span>
+<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb19-35"><a href="#cb19-35" aria-hidden="true" tabindex="-1"></a>      <span class="co"># 技术动作</span></span>
+<span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">==</span> <span class="st">"Dribble"</span> <span class="sc">&amp;</span> dribble.outcome.name <span class="sc">==</span> <span class="st">"Complete"</span> <span class="sc">~</span> <span class="dv">6</span>,</span>
+<span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a>      <span class="co"># 普通动作</span></span>
+<span id="cb19-39"><a href="#cb19-39" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Duel"</span>, <span class="st">"Pressure"</span>, <span class="st">"Shield"</span>) <span class="sc">~</span> <span class="dv">4</span>,</span>
+<span id="cb19-40"><a href="#cb19-40" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Pass"</span>, <span class="st">"Carry"</span>, <span class="st">"Ball Receipt*"</span>) <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb19-41"><a href="#cb19-41" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb19-42"><a href="#cb19-42" aria-hidden="true" tabindex="-1"></a>      <span class="co"># 失误</span></span>
+<span id="cb19-43"><a href="#cb19-43" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">%in%</span> error_types <span class="sc">~</span> <span class="sc">-</span><span class="dv">3</span>,</span>
+<span id="cb19-44"><a href="#cb19-44" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb19-45"><a href="#cb19-45" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="dv">1</span></span>
+<span id="cb19-46"><a href="#cb19-46" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb19-47"><a href="#cb19-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-48"><a href="#cb19-48" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 空间权重 W_space (X推进 + Y向心 + 特权豁免)</span></span>
+<span id="cb19-49"><a href="#cb19-49" aria-hidden="true" tabindex="-1"></a>    <span class="at">w_space =</span> <span class="fu">case_when</span>(</span>
+<span id="cb19-50"><a href="#cb19-50" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb19-51"><a href="#cb19-51" aria-hidden="true" tabindex="-1"></a>      <span class="co"># 角球：直接给满级权重 (2.5)，无视它在边路</span></span>
+<span id="cb19-52"><a href="#cb19-52" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">==</span> <span class="st">"Corner"</span> <span class="sc">~</span> <span class="fl">2.5</span>,</span>
+<span id="cb19-53"><a href="#cb19-53" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb19-54"><a href="#cb19-54" aria-hidden="true" tabindex="-1"></a>      <span class="co"># 任意球：给予较高的保底权重</span></span>
+<span id="cb19-55"><a href="#cb19-55" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">==</span> <span class="st">"Free Kick"</span> <span class="sc">~</span> <span class="fl">2.0</span>,</span>
+<span id="cb19-56"><a href="#cb19-56" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb19-57"><a href="#cb19-57" aria-hidden="true" tabindex="-1"></a>      <span class="co"># 失误：不放大</span></span>
+<span id="cb19-58"><a href="#cb19-58" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">%in%</span> error_types <span class="sc">~</span> <span class="fl">0.5</span>,</span>
+<span id="cb19-59"><a href="#cb19-59" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb19-60"><a href="#cb19-60" aria-hidden="true" tabindex="-1"></a>      <span class="co"># 防守：目标是 x=0 (保底线) + y=40 (守中路)</span></span>
+<span id="cb19-61"><a href="#cb19-61" aria-hidden="true" tabindex="-1"></a>      <span class="co"># 1 + 纵向分 + (0.5 * 横向分)</span></span>
+<span id="cb19-62"><a href="#cb19-62" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">%in%</span> def_types <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> ((<span class="dv">120</span> <span class="sc">-</span> location.x) <span class="sc">/</span> <span class="dv">120</span>) <span class="sc">+</span> (<span class="fl">0.5</span> <span class="sc">*</span> centrality_score),</span>
+<span id="cb19-63"><a href="#cb19-63" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb19-64"><a href="#cb19-64" aria-hidden="true" tabindex="-1"></a>      <span class="co"># 进攻组：目标是 x=120 (攻底线) + y=40 (走中路)</span></span>
+<span id="cb19-65"><a href="#cb19-65" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> (location.x <span class="sc">/</span> <span class="dv">120</span>) <span class="sc">+</span> (<span class="fl">0.5</span> <span class="sc">*</span> centrality_score)</span>
+<span id="cb19-66"><a href="#cb19-66" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb19-67"><a href="#cb19-67" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb19-68"><a href="#cb19-68" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 压力与质量</span></span>
+<span id="cb19-69"><a href="#cb19-69" aria-hidden="true" tabindex="-1"></a>    <span class="at">c_pressure =</span> <span class="fu">ifelse</span>(under_pressure <span class="sc">==</span> <span class="cn">TRUE</span>, <span class="fl">1.5</span>, <span class="fl">1.0</span>),</span>
+<span id="cb19-70"><a href="#cb19-70" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb19-71"><a href="#cb19-71" aria-hidden="true" tabindex="-1"></a>    <span class="at">q_height =</span> <span class="fu">case_when</span>(</span>
+<span id="cb19-72"><a href="#cb19-72" aria-hidden="true" tabindex="-1"></a>      type.name <span class="sc">==</span> <span class="st">"Pass"</span> <span class="sc">&amp;</span> pass.height.name <span class="sc">==</span> <span class="st">"High Pass"</span> <span class="sc">~</span> <span class="fl">0.8</span>,</span>
+<span id="cb19-73"><a href="#cb19-73" aria-hidden="true" tabindex="-1"></a>      type.name <span class="sc">==</span> <span class="st">"Pass"</span> <span class="sc">&amp;</span> pass.height.name <span class="sc">==</span> <span class="st">"Low Pass"</span> <span class="sc">~</span> <span class="fl">0.9</span>,</span>
+<span id="cb19-74"><a href="#cb19-74" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fl">1.0</span></span>
+<span id="cb19-75"><a href="#cb19-75" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb19-76"><a href="#cb19-76" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb19-77"><a href="#cb19-77" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 合成最终价值 Z</span></span>
+<span id="cb19-78"><a href="#cb19-78" aria-hidden="true" tabindex="-1"></a>    <span class="at">value_z =</span> s_base <span class="sc">*</span> w_space <span class="sc">*</span> c_pressure <span class="sc">*</span> q_height</span>
+<span id="cb19-79"><a href="#cb19-79" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb19-80"><a href="#cb19-80" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(value_z))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>检查代码正确性</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 检查分组均值</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>final_model_data <span class="sc">%&gt;%</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(custom_type) <span class="sc">%&gt;%</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">Avg_Base_Score =</span> <span class="fu">mean</span>(s_base),</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">Avg_Space_Weight =</span> <span class="fu">mean</span>(w_space), <span class="co"># Corner应该接近 2.5</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">Avg_Total_Z =</span> <span class="fu">mean</span>(value_z),</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">Count =</span> <span class="fu">n</span>()</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(custom_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Corner"</span>, <span class="st">"Free Kick"</span>, <span class="st">"Pass"</span>, <span class="st">"Shot"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(Avg_Total_Z))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+</section>
+<section id="二空间聚合与网格化" class="level2">
+<h2 class="anchored" data-anchor-id="二空间聚合与网格化">二、空间聚合与网格化</h2>
+<section id="第一部份空间网格化" class="level3">
+<h3 class="anchored" data-anchor-id="第一部份空间网格化">第一部份：空间网格化</h3>
+<p>问题：原始数据点过于密集且存在重叠（噪音大）。</p>
+<p>方案：将球场划分为 <span class="math inline">\(N \times M\)</span> 的网格（这里使用<span class="math inline">\(120 \times 80\)</span> 个<span class="math inline">\(1m^2\)</span>的单元）。</p>
+<p>计算：计算每个网格内所有事件 <span class="math inline">\(Z\)</span> 值的均值。</p>
+<p>产出：一组规则分布的样本点，作为克里金模型的输入。</p>
+<section id="网格化聚合" class="level4">
+<h4 class="anchored" data-anchor-id="网格化聚合">网格化聚合</h4>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>grid_data <span class="ot">&lt;-</span> final_model_data <span class="sc">%&gt;%</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">grid_x =</span> <span class="fu">round</span>(location.x),</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">grid_y =</span> <span class="fu">round</span>(location.y)</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(grid_x, grid_y) <span class="sc">%&gt;%</span></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">avg_z =</span> <span class="fu">mean</span>(value_z, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), </span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">count =</span> <span class="fu">n</span>(),                        </span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>将结果缩小到千行级别的，便于后续计算</p>
+<p>简单查看一下处理后的数据</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"原始数据行数:"</span>, <span class="fu">nrow</span>(final_model_data)))</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"聚合后网格数:"</span>, <span class="fu">nrow</span>(grid_data)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+<section id="第二部份拟合变异函数" class="level3">
+<h3 class="anchored" data-anchor-id="第二部份拟合变异函数">第二部份：拟合变异函数</h3>
+<p>数据转化，并计算实验变异函数</p>
+<p>width = 2: 每隔 2 米统计一次差异</p>
+<p>cutoff = 60: 我们只看 60 米以内的相关性，超过视作不相关</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>train_sp <span class="ot">&lt;-</span> grid_data</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">coordinates</span>(train_sp) <span class="ot">&lt;-</span> <span class="er">~</span>grid_x <span class="sc">+</span> grid_y</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>v_emp <span class="ot">&lt;-</span> <span class="fu">variogram</span>(avg_z <span class="sc">~</span> <span class="dv">1</span>, train_sp, <span class="at">width =</span> <span class="dv">2</span>, <span class="at">cutoff =</span> <span class="dv">60</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 拟合理论模型</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="co"># 使用指数模型 (Exp)，这是足球领域最常用的</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="co"># R 会自动帮你调整 nugget (随机误差), psill (波动幅度), range (战术半径)</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="st">"正在拟合最佳参数..."</span>)</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>v_model_fitted <span class="ot">&lt;-</span> <span class="fu">fit.variogram</span>(v_emp, <span class="fu">vgm</span>(<span class="at">psill =</span> <span class="fu">var</span>(grid_data<span class="sc">$</span>avg_z), <span class="st">"Exp"</span>, <span class="at">range =</span> <span class="dv">20</span>, <span class="at">nugget =</span> <span class="dv">1</span>))</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. 查看训练结果</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="st">"--- 训练完成！德甲空间参数如下 ---"</span>)</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(v_model_fitted)</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a><span class="co"># 5. 画出拟合图 (请保存这张图，它是你论文方法论部分的重要支撑)</span></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(v_emp, v_model_fitted, <span class="at">main =</span> <span class="st">"德甲球权价值空间变异函数 (Variogram Fit)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- 继续完成第二步：克里金插值 ---</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. 建立预测网格 (铺满全场)</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>pred_grid <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(<span class="at">x =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">120</span>, <span class="at">y =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">80</span>)</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="fu">coordinates</span>(pred_grid) <span class="ot">&lt;-</span> <span class="er">~</span>x <span class="sc">+</span> y</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="fu">gridded</span>(pred_grid) <span class="ot">&lt;-</span> <span class="cn">TRUE</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. 执行插值 (使用你刚才训练出的 v_model_fitted)</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="st">"正在生成热图数据 (Range=57.2m，可能会比较平滑)..."</span>)</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a><span class="co"># 修改后的代码：加入 nmax 参数</span></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a><span class="co"># nmax = 50 意味着：预测这个点的值时，只看离它最近的 50 个点，忽略 100 米开外不相关的点。</span></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>kriging_res <span class="ot">&lt;-</span> <span class="fu">krige</span>(avg_z <span class="sc">~</span> <span class="dv">1</span>, <span class="at">locations =</span> train_sp, <span class="at">newdata =</span> pred_grid, <span class="at">model =</span> v_model_fitted, <span class="at">nmax =</span> <span class="dv">50</span>)</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. 转为表格</span></span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>kriging_df <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(kriging_res)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>my_breaks <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="sc">-</span><span class="cn">Inf</span>, <span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">10</span>, <span class="dv">12</span>, <span class="dv">15</span>, <span class="cn">Inf</span>)</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>my_colors <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"midnightblue"</span>,  <span class="co"># 失误区</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"blue"</span>,          <span class="co"># 0 - 2 分</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"dodgerblue"</span>,    <span class="co"># 2 - 4 分</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"cyan"</span>,          <span class="co"># 4 - 6 分</span></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"greenyellow"</span>,   <span class="co"># 6 - 8 分</span></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"yellow"</span>,        <span class="co"># 8 - 10 分</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"orange"</span>,        <span class="co"># 10 - 12 分</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"red"</span>,           <span class="co"># 12 - 15 分</span></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"darkred"</span>        <span class="co"># &gt; 15 分 (绝对高危区)</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. 最终预测模型绘图代码</span></span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(kriging_df, <span class="fu">aes</span>(<span class="at">x =</span> x, <span class="at">y =</span> y, <span class="at">z =</span> var1.pred)) <span class="sc">+</span></span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># 使用平滑等高线填充</span></span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_contour_filled</span>(<span class="at">breaks =</span> my_breaks) <span class="sc">+</span></span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(</span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">values =</span> my_colors,</span>
+<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> <span class="st">"预测价值 Z"</span>,</span>
+<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">guide =</span> <span class="fu">guide_colorsteps</span>(<span class="at">show.limits =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a>  <span class="co"># 黑色球场线</span></span>
+<span id="cb26-26"><a href="#cb26-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">0</span>, <span class="at">xmax=</span><span class="dv">120</span>, <span class="at">ymin=</span><span class="dv">0</span>, <span class="at">ymax=</span><span class="dv">80</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb26-27"><a href="#cb26-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"segment"</span>, <span class="at">x=</span><span class="dv">60</span>, <span class="at">xend=</span><span class="dv">60</span>, <span class="at">y=</span><span class="dv">0</span>, <span class="at">yend=</span><span class="dv">80</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb26-28"><a href="#cb26-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"point"</span>, <span class="at">x=</span><span class="dv">60</span>, <span class="at">y=</span><span class="dv">40</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">1.5</span>) <span class="sc">+</span></span>
+<span id="cb26-29"><a href="#cb26-29" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb26-30"><a href="#cb26-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">0</span>, <span class="at">xmax=</span><span class="dv">18</span>, <span class="at">ymin=</span><span class="dv">18</span>, <span class="at">ymax=</span><span class="dv">62</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb26-31"><a href="#cb26-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">0</span>, <span class="at">xmax=</span><span class="dv">6</span>, <span class="at">ymin=</span><span class="dv">30</span>, <span class="at">ymax=</span><span class="dv">50</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb26-32"><a href="#cb26-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"point"</span>, <span class="at">x=</span><span class="dv">12</span>, <span class="at">y=</span><span class="dv">40</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb26-33"><a href="#cb26-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"segment"</span>, <span class="at">x=</span><span class="dv">0</span>, <span class="at">xend=</span><span class="dv">0</span>, <span class="at">y=</span><span class="dv">36</span>, <span class="at">yend=</span><span class="dv">44</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb26-34"><a href="#cb26-34" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb26-35"><a href="#cb26-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">102</span>, <span class="at">xmax=</span><span class="dv">120</span>, <span class="at">ymin=</span><span class="dv">18</span>, <span class="at">ymax=</span><span class="dv">62</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb26-36"><a href="#cb26-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">114</span>, <span class="at">xmax=</span><span class="dv">120</span>, <span class="at">ymin=</span><span class="dv">30</span>, <span class="at">ymax=</span><span class="dv">50</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb26-37"><a href="#cb26-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"point"</span>, <span class="at">x=</span><span class="dv">108</span>, <span class="at">y=</span><span class="dv">40</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb26-38"><a href="#cb26-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"segment"</span>, <span class="at">x=</span><span class="dv">120</span>, <span class="at">xend=</span><span class="dv">120</span>, <span class="at">y=</span><span class="dv">36</span>, <span class="at">yend=</span><span class="dv">44</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb26-39"><a href="#cb26-39" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb26-40"><a href="#cb26-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_fixed</span>(<span class="at">ratio =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb26-41"><a href="#cb26-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb26-42"><a href="#cb26-42" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb26-43"><a href="#cb26-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb26-44"><a href="#cb26-44" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"德甲球权价值场 (最终预测模型)"</span>, </span>
+<span id="cb26-45"><a href="#cb26-45" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Range = 57.2m: 展现了较强的战术整体性"</span></span>
+<span id="cb26-46"><a href="#cb26-46" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb26-47"><a href="#cb26-47" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb26-48"><a href="#cb26-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb26-49"><a href="#cb26-49" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb26-50"><a href="#cb26-50" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.background =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="st">"white"</span>, <span class="at">color =</span> <span class="cn">NA</span>),</span>
+<span id="cb26-51"><a href="#cb26-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">color =</span> <span class="st">"black"</span>), </span>
+<span id="cb26-52"><a href="#cb26-52" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb26-53"><a href="#cb26-53" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.title =</span> <span class="fu">element_blank</span>()</span>
+<span id="cb26-54"><a href="#cb26-54" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+<section id="三变异函数分析" class="level2">
+<h2 class="anchored" data-anchor-id="三变异函数分析">三、变异函数分析</h2>
+<p>价值场生成与应用 (Generation &amp; Application)这一步是出图、出结果、写分析的阶段。</p>
+<p>1）克里金插值 (Kriging Interpolation)算法：</p>
+<p>普通克里金 (Ordinary Kriging)。</p>
+<p>输入：网格化的样本点 + 训练好的变异函数参数。</p>
+<p>输出：一个连续的<strong>“球权价值场”</strong>（预测矩阵）。</p>
+<p>验证：使用交叉验证 (Cross-Validation) 计算 RMSE，证明模型准确度。</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ==========================================</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="co"># 第三步 1：模型交叉验证 (验证准确性)</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ==========================================</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="st">"正在进行留一法交叉验证 (LOOCV)，请稍候..."</span>)</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="co"># nfold = 5 表示 5折交叉验证，nmax = 50 保证计算速度</span></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>cv_results <span class="ot">&lt;-</span> <span class="fu">krige.cv</span>(avg_z <span class="sc">~</span> <span class="dv">1</span>, train_sp, <span class="at">model =</span> v_model_fitted, <span class="at">nfold =</span> <span class="dv">5</span>, <span class="at">nmax =</span> <span class="dv">50</span>)</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a><span class="co"># 计算核心验证指标</span></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>rmse <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">mean</span>(cv_results<span class="sc">$</span>residual<span class="sc">^</span><span class="dv">2</span>)) <span class="co"># 均方根误差</span></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>msdr <span class="ot">&lt;-</span> <span class="fu">mean</span>(cv_results<span class="sc">$</span>zscore<span class="sc">^</span><span class="dv">2</span>)         <span class="co"># 标准化均方误差</span></span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"模型 RMSE (越小越好):"</span>, <span class="fu">round</span>(rmse, <span class="dv">4</span>)))</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"模型 MSDR (越接近1越好):"</span>, <span class="fu">round</span>(msdr, <span class="dv">4</span>)))</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a><span class="co"># 你可以把这两个数值记录下来，写进论文的“模型评估”章节</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>2）可视化呈现 (Visualization)</p>
+<p>你需要生成三类图来支撑论文：</p>
+<p>图一：德甲基准价值场 (League Baseline Field)含义：全赛季平均水平。</p>
+<p>看点：展示德甲整体的战术热区（通常是禁区和两翼肋部）。</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 断点</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>my_breaks <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="sc">-</span><span class="cn">Inf</span>, <span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">6</span>, <span class="dv">8</span>, <span class="dv">10</span>, <span class="dv">12</span>, <span class="dv">15</span>, <span class="cn">Inf</span>)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 着色：蓝(失误) -&gt; 红(威胁)</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>my_colors <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"midnightblue"</span>,  <span class="co"># &lt; 0 分 (失误区域)</span></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"blue"</span>,          <span class="co"># 0 - 2 分 (后场常规传导)</span></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"dodgerblue"</span>,    <span class="co"># 2 - 4 分 (中场过渡)</span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"cyan"</span>,          <span class="co"># 4 - 6 分 (前场推进)</span></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"greenyellow"</span>,   <span class="co"># 6 - 8 分 (进入威胁区)</span></span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"yellow"</span>,        <span class="co"># 8 - 10 分 (关键传球区)</span></span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"orange"</span>,        <span class="co"># 10 - 12 分 (射门边缘)</span></span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">"red"</span>,           <span class="co"># 12 - 15 分 (高危射门区)</span></span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">"darkred"</span>        <span class="co"># &gt; 15 分 (绝对得分机会/角球)</span></span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(kriging_df, <span class="fu">aes</span>(<span class="at">x =</span> x, <span class="at">y =</span> y, <span class="at">z =</span> var1.pred)) <span class="sc">+</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_contour_filled</span>(<span class="at">breaks =</span> my_breaks) <span class="sc">+</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">values =</span> my_colors,</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> <span class="st">"战术价值 Z"</span>,</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">guide =</span> <span class="fu">guide_colorsteps</span>(<span class="at">show.limits =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># 球场线</span></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">0</span>, <span class="at">xmax=</span><span class="dv">120</span>, <span class="at">ymin=</span><span class="dv">0</span>, <span class="at">ymax=</span><span class="dv">80</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"segment"</span>, <span class="at">x=</span><span class="dv">60</span>, <span class="at">xend=</span><span class="dv">60</span>, <span class="at">y=</span><span class="dv">0</span>, <span class="at">yend=</span><span class="dv">80</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"point"</span>, <span class="at">x=</span><span class="dv">60</span>, <span class="at">y=</span><span class="dv">40</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">1.5</span>) <span class="sc">+</span></span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># 己方禁区</span></span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">0</span>, <span class="at">xmax=</span><span class="dv">18</span>, <span class="at">ymin=</span><span class="dv">18</span>, <span class="at">ymax=</span><span class="dv">62</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">0</span>, <span class="at">xmax=</span><span class="dv">6</span>, <span class="at">ymin=</span><span class="dv">30</span>, <span class="at">ymax=</span><span class="dv">50</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"point"</span>, <span class="at">x=</span><span class="dv">12</span>, <span class="at">y=</span><span class="dv">40</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"segment"</span>, <span class="at">x=</span><span class="dv">0</span>, <span class="at">xend=</span><span class="dv">0</span>, <span class="at">y=</span><span class="dv">36</span>, <span class="at">yend=</span><span class="dv">44</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># 对方禁区</span></span>
+<span id="cb29-21"><a href="#cb29-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">102</span>, <span class="at">xmax=</span><span class="dv">120</span>, <span class="at">ymin=</span><span class="dv">18</span>, <span class="at">ymax=</span><span class="dv">62</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb29-22"><a href="#cb29-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">114</span>, <span class="at">xmax=</span><span class="dv">120</span>, <span class="at">ymin=</span><span class="dv">30</span>, <span class="at">ymax=</span><span class="dv">50</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb29-23"><a href="#cb29-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"point"</span>, <span class="at">x=</span><span class="dv">108</span>, <span class="at">y=</span><span class="dv">40</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb29-24"><a href="#cb29-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"segment"</span>, <span class="at">x=</span><span class="dv">120</span>, <span class="at">xend=</span><span class="dv">120</span>, <span class="at">y=</span><span class="dv">36</span>, <span class="at">yend=</span><span class="dv">44</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb29-25"><a href="#cb29-25" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb29-26"><a href="#cb29-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_fixed</span>(<span class="at">ratio =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb29-27"><a href="#cb29-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb29-28"><a href="#cb29-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"德甲球权价值场 (克里金平滑基准)"</span>, </span>
+<span id="cb29-29"><a href="#cb29-29" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle =</span> <span class="st">"蓝/绿代表推进与过渡，黄/红代表高威胁与得分"</span>) <span class="sc">+</span></span>
+<span id="cb29-30"><a href="#cb29-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb29-31"><a href="#cb29-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb29-32"><a href="#cb29-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.background =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="st">"white"</span>, <span class="at">color =</span> <span class="cn">NA</span>),</span>
+<span id="cb29-33"><a href="#cb29-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">color =</span> <span class="st">"black"</span>), </span>
+<span id="cb29-34"><a href="#cb29-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb29-35"><a href="#cb29-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.title =</span> <span class="fu">element_blank</span>()</span>
+<span id="cb29-36"><a href="#cb29-36" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>图二：单场/单队表现图 (Match Performance Map)含义：将某场比赛（如拜仁 vs 多特）的数据带入模型生成的图。</p>
+<p>看点：展示该场比赛双方争夺的焦点区域。</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ==========================================</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="co"># 绘图二：拜仁慕尼黑单队表现图</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ==========================================</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(bayern_df, <span class="fu">aes</span>(<span class="at">x =</span> x, <span class="at">y =</span> y, <span class="at">z =</span> var1.pred)) <span class="sc">+</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># 完全复用图一的 breaks (my_breaks)</span></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_contour_filled</span>(<span class="at">breaks =</span> my_breaks) <span class="sc">+</span></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># 完全复用图一的 colors (my_colors)</span></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(</span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">values =</span> my_colors,</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> <span class="st">"拜仁价值 Z"</span>,</span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">guide =</span> <span class="fu">guide_colorsteps</span>(<span class="at">show.limits =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># --- 叠加球场线 ---</span></span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">0</span>, <span class="at">xmax=</span><span class="dv">120</span>, <span class="at">ymin=</span><span class="dv">0</span>, <span class="at">ymax=</span><span class="dv">80</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"segment"</span>, <span class="at">x=</span><span class="dv">60</span>, <span class="at">xend=</span><span class="dv">60</span>, <span class="at">y=</span><span class="dv">0</span>, <span class="at">yend=</span><span class="dv">80</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"point"</span>, <span class="at">x=</span><span class="dv">60</span>, <span class="at">y=</span><span class="dv">40</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">1.5</span>) <span class="sc">+</span></span>
+<span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">0</span>, <span class="at">xmax=</span><span class="dv">18</span>, <span class="at">ymin=</span><span class="dv">18</span>, <span class="at">ymax=</span><span class="dv">62</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb30-21"><a href="#cb30-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">0</span>, <span class="at">xmax=</span><span class="dv">6</span>, <span class="at">ymin=</span><span class="dv">30</span>, <span class="at">ymax=</span><span class="dv">50</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb30-22"><a href="#cb30-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"point"</span>, <span class="at">x=</span><span class="dv">12</span>, <span class="at">y=</span><span class="dv">40</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb30-23"><a href="#cb30-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"segment"</span>, <span class="at">x=</span><span class="dv">0</span>, <span class="at">xend=</span><span class="dv">0</span>, <span class="at">y=</span><span class="dv">36</span>, <span class="at">yend=</span><span class="dv">44</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb30-24"><a href="#cb30-24" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb30-25"><a href="#cb30-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">102</span>, <span class="at">xmax=</span><span class="dv">120</span>, <span class="at">ymin=</span><span class="dv">18</span>, <span class="at">ymax=</span><span class="dv">62</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb30-26"><a href="#cb30-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">114</span>, <span class="at">xmax=</span><span class="dv">120</span>, <span class="at">ymin=</span><span class="dv">30</span>, <span class="at">ymax=</span><span class="dv">50</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb30-27"><a href="#cb30-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"point"</span>, <span class="at">x=</span><span class="dv">108</span>, <span class="at">y=</span><span class="dv">40</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb30-28"><a href="#cb30-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"segment"</span>, <span class="at">x=</span><span class="dv">120</span>, <span class="at">xend=</span><span class="dv">120</span>, <span class="at">y=</span><span class="dv">36</span>, <span class="at">yend=</span><span class="dv">44</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb30-29"><a href="#cb30-29" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb30-30"><a href="#cb30-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_fixed</span>(<span class="at">ratio =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb30-31"><a href="#cb30-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb30-32"><a href="#cb30-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"图二：拜仁慕尼黑单队价值场"</span>, <span class="at">subtitle =</span> <span class="st">"统一基准色阶下的战术侧重"</span>) <span class="sc">+</span></span>
+<span id="cb30-33"><a href="#cb30-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb30-34"><a href="#cb30-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid =</span> <span class="fu">element_blank</span>(), </span>
+<span id="cb30-35"><a href="#cb30-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.background =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="st">"white"</span>, <span class="at">color =</span> <span class="cn">NA</span>), </span>
+<span id="cb30-36"><a href="#cb30-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">color =</span> <span class="st">"black"</span>), <span class="co"># 已删去 font family</span></span>
+<span id="cb30-37"><a href="#cb30-37" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text =</span> <span class="fu">element_blank</span>(), </span>
+<span id="cb30-38"><a href="#cb30-38" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.title =</span> <span class="fu">element_blank</span>()</span>
+<span id="cb30-39"><a href="#cb30-39" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>图三：战术差异图 (Tactical Difference / Residual Map)计算：<span class="math inline">\(\text{单场图} - \text{基准图}\)</span>。</p>
+<p>看点：红色区域：战术溢价区（表现远超平均水平，是制胜关键）。</p>
+<p>蓝色区域：战术塌陷区（表现低于平均水平，是被压制区域）。</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ==========================================</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="co"># 绘图三：战术差异图 (拜仁 vs 联盟平均)</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ==========================================</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. 专门为差异图设定对称的断点 (共 7 个区间)</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="co"># 关注正负差值在 -3 到 3 之间的战术倾斜</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>diff_breaks <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="sc">-</span><span class="cn">Inf</span>, <span class="sc">-</span><span class="dv">2</span>, <span class="sc">-</span><span class="fl">0.5</span>, <span class="sc">-</span><span class="fl">0.1</span>, <span class="fl">0.1</span>, <span class="fl">0.5</span>, <span class="dv">2</span>, <span class="cn">Inf</span>)</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. 专门配一套发散色阶：深蓝(弱) -&gt; 浅蓝 -&gt; 白(持平) -&gt; 橙红 -&gt; 深红(强)</span></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>diff_colors <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"midnightblue"</span>,  <span class="co"># 严重落后均值</span></span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"dodgerblue"</span>,    <span class="co"># 落后均值</span></span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">"lightcyan"</span>,     <span class="co"># 略微落后</span></span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">"white"</span>,         <span class="co"># 与联盟均值持平 (0 附近)</span></span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>  <span class="st">"lightsalmon"</span>,   <span class="co"># 略微领先</span></span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>  <span class="st">"red"</span>,           <span class="co"># 领先均值</span></span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>  <span class="st">"darkred"</span>        <span class="co"># 绝对战术优势区</span></span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. 画图代码</span></span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(diff_df, <span class="fu">aes</span>(<span class="at">x =</span> x, <span class="at">y =</span> y, <span class="at">z =</span> diff_z)) <span class="sc">+</span></span>
+<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_contour_filled</span>(<span class="at">breaks =</span> diff_breaks) <span class="sc">+</span></span>
+<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(</span>
+<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">values =</span> diff_colors,</span>
+<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> <span class="st">"价值溢价</span><span class="sc">\n</span><span class="st">(拜仁-均值)"</span>,</span>
+<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">guide =</span> <span class="fu">guide_colorsteps</span>(<span class="at">show.limits =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb31-27"><a href="#cb31-27" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb31-28"><a href="#cb31-28" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb31-29"><a href="#cb31-29" aria-hidden="true" tabindex="-1"></a>  <span class="co"># --- 叠加球场线 ---</span></span>
+<span id="cb31-30"><a href="#cb31-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">0</span>, <span class="at">xmax=</span><span class="dv">120</span>, <span class="at">ymin=</span><span class="dv">0</span>, <span class="at">ymax=</span><span class="dv">80</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"segment"</span>, <span class="at">x=</span><span class="dv">60</span>, <span class="at">xend=</span><span class="dv">60</span>, <span class="at">y=</span><span class="dv">0</span>, <span class="at">yend=</span><span class="dv">80</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"point"</span>, <span class="at">x=</span><span class="dv">60</span>, <span class="at">y=</span><span class="dv">40</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">1.5</span>) <span class="sc">+</span></span>
+<span id="cb31-33"><a href="#cb31-33" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb31-34"><a href="#cb31-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">0</span>, <span class="at">xmax=</span><span class="dv">18</span>, <span class="at">ymin=</span><span class="dv">18</span>, <span class="at">ymax=</span><span class="dv">62</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb31-35"><a href="#cb31-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">0</span>, <span class="at">xmax=</span><span class="dv">6</span>, <span class="at">ymin=</span><span class="dv">30</span>, <span class="at">ymax=</span><span class="dv">50</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb31-36"><a href="#cb31-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"point"</span>, <span class="at">x=</span><span class="dv">12</span>, <span class="at">y=</span><span class="dv">40</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb31-37"><a href="#cb31-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"segment"</span>, <span class="at">x=</span><span class="dv">0</span>, <span class="at">xend=</span><span class="dv">0</span>, <span class="at">y=</span><span class="dv">36</span>, <span class="at">yend=</span><span class="dv">44</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb31-38"><a href="#cb31-38" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb31-39"><a href="#cb31-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">102</span>, <span class="at">xmax=</span><span class="dv">120</span>, <span class="at">ymin=</span><span class="dv">18</span>, <span class="at">ymax=</span><span class="dv">62</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb31-40"><a href="#cb31-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"rect"</span>, <span class="at">xmin=</span><span class="dv">114</span>, <span class="at">xmax=</span><span class="dv">120</span>, <span class="at">ymin=</span><span class="dv">30</span>, <span class="at">ymax=</span><span class="dv">50</span>, <span class="at">fill=</span><span class="cn">NA</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb31-41"><a href="#cb31-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"point"</span>, <span class="at">x=</span><span class="dv">108</span>, <span class="at">y=</span><span class="dv">40</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb31-42"><a href="#cb31-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"segment"</span>, <span class="at">x=</span><span class="dv">120</span>, <span class="at">xend=</span><span class="dv">120</span>, <span class="at">y=</span><span class="dv">36</span>, <span class="at">yend=</span><span class="dv">44</span>, <span class="at">color=</span><span class="st">"black"</span>, <span class="at">size=</span><span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb31-43"><a href="#cb31-43" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb31-44"><a href="#cb31-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_fixed</span>(<span class="at">ratio =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb31-45"><a href="#cb31-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb31-46"><a href="#cb31-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"图三：拜仁慕尼黑战术差异图"</span>, <span class="at">subtitle =</span> <span class="st">"红色区: 战术优势/活跃区域 | 蓝色区: 被压制/放弃区域"</span>) <span class="sc">+</span></span>
+<span id="cb31-47"><a href="#cb31-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb31-48"><a href="#cb31-48" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.grid =</span> <span class="fu">element_blank</span>(), </span>
+<span id="cb31-49"><a href="#cb31-49" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.background =</span> <span class="fu">element_rect</span>(<span class="at">fill =</span> <span class="st">"white"</span>, <span class="at">color =</span> <span class="cn">NA</span>), </span>
+<span id="cb31-50"><a href="#cb31-50" aria-hidden="true" tabindex="-1"></a>    <span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">color =</span> <span class="st">"black"</span>), </span>
+<span id="cb31-51"><a href="#cb31-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text =</span> <span class="fu">element_blank</span>(), </span>
+<span id="cb31-52"><a href="#cb31-52" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.title =</span> <span class="fu">element_blank</span>()</span>
+<span id="cb31-53"><a href="#cb31-53" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
