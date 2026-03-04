@@ -81,7 +81,7 @@ for(i in 1:nrow(matches)) {
 all_1516_events <- bind_rows(all_events_list)
 ```
 
-```{r}
+```{r,eval=FALSE}
 file_name <- "data/Bundesliga_1516_AllEvents.rds"
 saveRDS(all_1516_events, file = file_name)
 ```
@@ -159,6 +159,7 @@ write.csv(full_season_cleaned, file_name, row.names = FALSE)
 full_season_cleaned <- read.csv("data/Bundesliga_1516_Events.csv")
 ```
 
+
 ### 一、构建核心变量 Z
 
 #### 特征选择依据
@@ -192,6 +193,12 @@ full_season_cleaned <- read.csv("data/Bundesliga_1516_Events.csv")
 ##### 数据支持
 
 ###### 1）射门
+
+```{r,eval=FALSE}
+shots_data <- full_season_cleaned %>% 
+  filter(type.name == "Shot")
+```
+
 
 ```{r,eval=FALSE}
 p_final_style <- ggplot(shots_data, aes(x = location.x, y = location.y)) +
@@ -247,6 +254,17 @@ ggsave(
 ###### 2）压迫
 
 计算受压迫与不受压迫状态下的“失误率”
+```{r,eval=FALSE}
+pressure_stats <- full_season_cleaned %>%
+  mutate(is_error = ifelse(type.name %in% c("Miscontrol", "Dispossessed"), 1, 0)) %>%
+  group_by(under_pressure) %>%
+  summarise(
+    total_actions = n(),
+    error_count = sum(is_error),
+    error_rate = error_count / total_actions
+  ) %>%
+  mutate(under_pressure = ifelse(under_pressure, "受压迫 (Pressure)", "无压迫 (Free)"))
+```
 
 ```{r,eval=FALSE}
 p2 <- ggplot(pressure_stats, aes(x = under_pressure, y = error_rate, fill = under_pressure)) +
@@ -543,7 +561,6 @@ final_model_data <- full_season_cleaned %>%
 检查代码正确性
 
 ```{r,eval=FALSE}
-# 检查分组均值
 final_model_data %>%
   group_by(custom_type) %>%
   summarise(
@@ -611,20 +628,22 @@ v_emp <- variogram(avg_z ~ 1, train_sp, width = 2, cutoff = 60)
 ```{r,eval=FALSE}
 # 拟合理论模型
 # 使用指数模型 (Exp)，这是足球领域最常用的
-# R 会自动帮你调整 nugget (随机误差), psill (波动幅度), range (战术半径)
+
 print("正在拟合最佳参数...")
 v_model_fitted <- fit.variogram(v_emp, vgm(psill = var(grid_data$avg_z), "Exp", range = 20, nugget = 1))
 
 # 4. 查看训练结果
-print("--- 训练完成！德甲空间参数如下 ---")
 print(v_model_fitted)
 
 # 5. 画出拟合图 (请保存这张图，它是你论文方法论部分的重要支撑)
+png("output_figures/德甲15_16赛季_变异函数拟合图.png", width = 6, height = 5, units = "in", res = 300)
 plot(v_emp, v_model_fitted, main = "德甲球权价值空间变异函数 (Variogram Fit)")
+dev.off() # 这句非常重要，表示关闭画板并保存文件
 ```
 
+
 ```{r,eval=FALSE}
-# --- 继续完成第二步：克里金插值 ---
+# 克里金插值
 
 # 1. 建立预测网格 (铺满全场)
 pred_grid <- expand.grid(x = 1:120, y = 1:80)
@@ -632,9 +651,7 @@ coordinates(pred_grid) <- ~x + y
 gridded(pred_grid) <- TRUE
 
 # 2. 执行插值 (使用你刚才训练出的 v_model_fitted)
-print("正在生成热图数据 (Range=57.2m，可能会比较平滑)...")
-
-# 修改后的代码：加入 nmax 参数
+# 加入 nmax 参数
 # nmax = 50 意味着：预测这个点的值时，只看离它最近的 50 个点，忽略 100 米开外不相关的点。
 kriging_res <- krige(avg_z ~ 1, locations = train_sp, newdata = pred_grid, model = v_model_fitted, nmax = 50)
 
@@ -642,62 +659,6 @@ kriging_res <- krige(avg_z ~ 1, locations = train_sp, newdata = pred_grid, model
 kriging_df <- as.data.frame(kriging_res)
 ```
 
-```{r,eval=FALSE}
-my_breaks <- c(-Inf, 0, 2, 4, 6, 8, 10, 12, 15, Inf)
-my_colors <- c(
-  "midnightblue",  # 失误区
-  "blue",          # 0 - 2 分
-  "dodgerblue",    # 2 - 4 分
-  "cyan",          # 4 - 6 分
-  "greenyellow",   # 6 - 8 分
-  "yellow",        # 8 - 10 分
-  "orange",        # 10 - 12 分
-  "red",           # 12 - 15 分
-  "darkred"        # > 15 分 (绝对高危区)
-)
-
-# 2. 最终预测模型绘图代码
-ggplot(kriging_df, aes(x = x, y = y, z = var1.pred)) +
-  
-  # 使用平滑等高线填充
-  geom_contour_filled(breaks = my_breaks) +
-  scale_fill_manual(
-    values = my_colors,
-    name = "预测价值 Z",
-    guide = guide_colorsteps(show.limits = TRUE)
-  ) +
-  
-  # 黑色球场线
-  annotate("rect", xmin=0, xmax=120, ymin=0, ymax=80, fill=NA, color="black", size=0.5) +
-  annotate("segment", x=60, xend=60, y=0, yend=80, color="black", size=0.5) +
-  annotate("point", x=60, y=40, color="black", size=1.5) +
-  
-  annotate("rect", xmin=0, xmax=18, ymin=18, ymax=62, fill=NA, color="black", size=0.5) +
-  annotate("rect", xmin=0, xmax=6, ymin=30, ymax=50, fill=NA, color="black", size=0.5) +
-  annotate("point", x=12, y=40, color="black", size=1) +
-  annotate("segment", x=0, xend=0, y=36, yend=44, color="black", size=2) +
-  
-  annotate("rect", xmin=102, xmax=120, ymin=18, ymax=62, fill=NA, color="black", size=0.5) +
-  annotate("rect", xmin=114, xmax=120, ymin=30, ymax=50, fill=NA, color="black", size=0.5) +
-  annotate("point", x=108, y=40, color="black", size=1) +
-  annotate("segment", x=120, xend=120, y=36, yend=44, color="black", size=2) +
-  
-  coord_fixed(ratio = 1) +
-  theme_minimal() +
-  
-  labs(
-    title = "德甲球权价值场 (最终预测模型)", 
-    subtitle = "Range = 57.2m: 展现了较强的战术整体性"
-  ) +
-  
-  theme(
-    panel.grid = element_blank(),
-    plot.background = element_rect(fill = "white", color = NA),
-    text = element_text(color = "black"), 
-    axis.text = element_blank(),
-    axis.title = element_blank()
-  )
-```
 
 ## 三、变异函数分析
 
@@ -714,10 +675,7 @@ ggplot(kriging_df, aes(x = x, y = y, z = var1.pred)) +
 验证：使用交叉验证 (Cross-Validation) 计算 RMSE，证明模型准确度。
 
 ```{r,eval=FALSE}
-# ==========================================
-# 第三步 1：模型交叉验证 (验证准确性)
-# ==========================================
-print("正在进行留一法交叉验证 (LOOCV)，请稍候...")
+# 模型交叉验证 (验证准确性)
 
 # nfold = 5 表示 5折交叉验证，nmax = 50 保证计算速度
 cv_results <- krige.cv(avg_z ~ 1, train_sp, model = v_model_fitted, nfold = 5, nmax = 50)
@@ -729,16 +687,40 @@ msdr <- mean(cv_results$zscore^2)         # 标准化均方误差
 print(paste("模型 RMSE (越小越好):", round(rmse, 4)))
 print(paste("模型 MSDR (越接近1越好):", round(msdr, 4)))
 
-# 你可以把这两个数值记录下来，写进论文的“模型评估”章节
+```
+2）对比泛克里金
+
+```{r,eval=FALSE}
+pred_grid_uk <- expand.grid(grid_x = 1:120, grid_y = 1:80)
+coordinates(pred_grid_uk) <- ~grid_x + grid_y
+gridded(pred_grid_uk) <- TRUE
+
+# 1. 拟合泛克里金的变异函数 (统一使用 grid_x 和 grid_y)
+v_emp_uk <- variogram(avg_z ~ grid_x + grid_y, train_sp, width = 2, cutoff = 60)
+v_model_fitted_uk <- fit.variogram(v_emp_uk, vgm("Exp"))
+
+# 2. 泛克里金插值全场预测 (公式和 newdata 都换成统一后的)
+kriging_res_uk <- krige(avg_z ~ grid_x + grid_y, locations = train_sp, newdata = pred_grid_uk, model = v_model_fitted_uk, nmax = 50)
+kriging_df_uk <- as.data.frame(kriging_res_uk)
+
+# 【重点】：为了不影响你后面的画图代码，这里我们把列名改回短名字 x 和 y
+colnames(kriging_df_uk)[which(names(kriging_df_uk) == "grid_x")] <- "x"
+colnames(kriging_df_uk)[which(names(kriging_df_uk) == "grid_y")] <- "y"
+
+# 3. 交叉验证对比误差
+cv_results_uk <- krige.cv(avg_z ~ grid_x + grid_y, train_sp, model = v_model_fitted_uk, nfold = 5, nmax = 50)
+rmse_uk <- sqrt(mean(cv_results_uk$residual^2))
+
+print("=====================================")
+print("泛克里金模型 (UK) 交叉验证结果：")
+print(paste("RMSE 误差为:", round(rmse_uk, 4)))
+print("=====================================")
 ```
 
-2）可视化呈现 (Visualization)
+## 四、实证分析
 
-你需要生成三类图来支撑论文：
-
-图一：德甲基准价值场 (League Baseline Field)含义：全赛季平均水平。
-
-看点：展示德甲整体的战术热区（通常是禁区和两翼肋部）。
+##可视化呈现 (Visualization)
+### 1）球队整体
 
 ```{r,eval=FALSE}
 # 断点
@@ -758,8 +740,13 @@ my_colors <- c(
 )
 ```
 
-```{r,eval=FALSE}
-ggplot(kriging_df, aes(x = x, y = y, z = var1.pred)) +
+
+
+```{r}
+# ==========================================
+# 绘图一：德甲全联盟球权价值基准场
+# ==========================================
+p_map1 <- ggplot(kriging_df, aes(x = x, y = y, z = var1.pred)) +
   geom_contour_filled(breaks = my_breaks) +
   scale_fill_manual(
     values = my_colors,
@@ -767,140 +754,127 @@ ggplot(kriging_df, aes(x = x, y = y, z = var1.pred)) +
     guide = guide_colorsteps(show.limits = TRUE)
   ) +
   
-  # 球场线
-  annotate("rect", xmin=0, xmax=120, ymin=0, ymax=80, fill=NA, color="black", size=0.5) +
-  annotate("segment", x=60, xend=60, y=0, yend=80, color="black", size=0.5) +
+  # 球场线辅助 (统一使用 linewidth=0.3 细线)
+  annotate("rect", xmin=0, xmax=120, ymin=0, ymax=80, fill=NA, color="black", linewidth=0.3) +
+  annotate("segment", x=60, xend=60, y=0, yend=80, color="black", linewidth=0.3) +
   annotate("point", x=60, y=40, color="black", size=1.5) +
   
-  # 己方禁区
-  annotate("rect", xmin=0, xmax=18, ymin=18, ymax=62, fill=NA, color="black", size=0.5) +
-  annotate("rect", xmin=0, xmax=6, ymin=30, ymax=50, fill=NA, color="black", size=0.5) +
+  annotate("rect", xmin=0, xmax=18, ymin=18, ymax=62, fill=NA, color="black", linewidth=0.3) +
+  annotate("rect", xmin=0, xmax=6, ymin=30, ymax=50, fill=NA, color="black", linewidth=0.3) +
   annotate("point", x=12, y=40, color="black", size=1) +
-  annotate("segment", x=0, xend=0, y=36, yend=44, color="black", size=2) +
+  annotate("segment", x=0, xend=0, y=36, yend=44, color="black", linewidth=1.5) +
   
-  # 对方禁区
-  annotate("rect", xmin=102, xmax=120, ymin=18, ymax=62, fill=NA, color="black", size=0.5) +
-  annotate("rect", xmin=114, xmax=120, ymin=30, ymax=50, fill=NA, color="black", size=0.5) +
+  annotate("rect", xmin=102, xmax=120, ymin=18, ymax=62, fill=NA, color="black", linewidth=0.3) +
+  annotate("rect", xmin=114, xmax=120, ymin=30, ymax=50, fill=NA, color="black", linewidth=0.3) +
   annotate("point", x=108, y=40, color="black", size=1) +
-  annotate("segment", x=120, xend=120, y=36, yend=44, color="black", size=2) +
+  annotate("segment", x=120, xend=120, y=36, yend=44, color="black", linewidth=1.5) +
   
-  coord_fixed(ratio = 1) +
-  theme_minimal() +
-  labs(title = "德甲球权价值场 (克里金平滑基准)", 
-       subtitle = "蓝/绿代表推进与过渡，黄/红代表高威胁与得分") +
+  # 严格锁定比例和边界
+  coord_fixed(ratio = 1, xlim = c(-1, 121), ylim = c(-1, 81), expand = FALSE) +
+  theme_void() + 
   theme(
-    panel.grid = element_blank(),
+    plot.title = element_text(size = 32, face = "bold", hjust = 0.5, margin = margin(t=5, b = 5)),
+    plot.subtitle = element_text(size = 18, hjust = 0.5, color = "grey20", margin = margin(b = 10)),
+    legend.title = element_text(size = 14, face = "bold"),
+    legend.text = element_text(size = 12),
+    legend.key.height = unit(0.8, "cm"), 
     plot.background = element_rect(fill = "white", color = NA),
-    text = element_text(color = "black"), 
-    axis.text = element_blank(),
-    axis.title = element_blank()
+    plot.margin = margin(10, 10, 10, 10) 
+  ) +
+  labs(
+    title = "德甲全联盟战术价值场", 
+    subtitle = "克里金平滑推演基准图"
   )
+
+ggsave("output_figures/图一_德甲球权价值基准场.png", plot = p_map1, width = 5, height = 4, units = "in", dpi = 300)
 ```
 
-图二：单场/单队表现图 (Match Performance Map)含义：将某场比赛（如拜仁 vs 多特）的数据带入模型生成的图。
 
-看点：展示该场比赛双方争夺的焦点区域。
-
-```{r,eval=FALSE}
+```{r}
 # ==========================================
 # 绘图二：拜仁慕尼黑单队表现图
 # ==========================================
-
-ggplot(bayern_df, aes(x = x, y = y, z = var1.pred)) +
-  # 完全复用图一的 breaks (my_breaks)
+p_map2 <- ggplot(bayern_df, aes(x = x, y = y, z = var1.pred)) +
   geom_contour_filled(breaks = my_breaks) +
-  # 完全复用图一的 colors (my_colors)
   scale_fill_manual(
     values = my_colors,
-    name = "拜仁价值 Z",
+    name = "战术价值 Z",
     guide = guide_colorsteps(show.limits = TRUE)
   ) +
   
-  # --- 叠加球场线 ---
-  annotate("rect", xmin=0, xmax=120, ymin=0, ymax=80, fill=NA, color="black", size=0.5) +
-  annotate("segment", x=60, xend=60, y=0, yend=80, color="black", size=0.5) +
+  annotate("rect", xmin=0, xmax=120, ymin=0, ymax=80, fill=NA, color="black", linewidth=0.3) +
+  annotate("segment", x=60, xend=60, y=0, yend=80, color="black", linewidth=0.3) +
   annotate("point", x=60, y=40, color="black", size=1.5) +
-  
-  annotate("rect", xmin=0, xmax=18, ymin=18, ymax=62, fill=NA, color="black", size=0.5) +
-  annotate("rect", xmin=0, xmax=6, ymin=30, ymax=50, fill=NA, color="black", size=0.5) +
+  annotate("rect", xmin=0, xmax=18, ymin=18, ymax=62, fill=NA, color="black", linewidth=0.3) +
+  annotate("rect", xmin=0, xmax=6, ymin=30, ymax=50, fill=NA, color="black", linewidth=0.3) +
   annotate("point", x=12, y=40, color="black", size=1) +
-  annotate("segment", x=0, xend=0, y=36, yend=44, color="black", size=2) +
-  
-  annotate("rect", xmin=102, xmax=120, ymin=18, ymax=62, fill=NA, color="black", size=0.5) +
-  annotate("rect", xmin=114, xmax=120, ymin=30, ymax=50, fill=NA, color="black", size=0.5) +
+  annotate("segment", x=0, xend=0, y=36, yend=44, color="black", linewidth=1.5) +
+  annotate("rect", xmin=102, xmax=120, ymin=18, ymax=62, fill=NA, color="black", linewidth=0.3) +
+  annotate("rect", xmin=114, xmax=120, ymin=30, ymax=50, fill=NA, color="black", linewidth=0.3) +
   annotate("point", x=108, y=40, color="black", size=1) +
-  annotate("segment", x=120, xend=120, y=36, yend=44, color="black", size=2) +
+  annotate("segment", x=120, xend=120, y=36, yend=44, color="black", linewidth=1.5) +
   
-  coord_fixed(ratio = 1) +
-  theme_minimal() +
-  labs(title = "图二：拜仁慕尼黑单队价值场", subtitle = "统一基准色阶下的战术侧重") +
+  coord_fixed(ratio = 1, xlim = c(-1, 121), ylim = c(-1, 81), expand = FALSE) +
+  theme_void() + 
   theme(
-    panel.grid = element_blank(), 
-    plot.background = element_rect(fill = "white", color = NA), 
-    text = element_text(color = "black"), # 已删去 font family
-    axis.text = element_blank(), 
-    axis.title = element_blank()
+    plot.title = element_text(size = 32, face = "bold", hjust = 0.5, margin = margin(t=5, b = 5)),
+    plot.subtitle = element_text(size = 18, hjust = 0.5, color = "grey20", margin = margin(b = 10)),
+    legend.title = element_text(size = 14, face = "bold"),
+    legend.text = element_text(size = 12),
+    legend.key.height = unit(0.8, "cm"), 
+    plot.background = element_rect(fill = "white", color = NA),
+    plot.margin = margin(10, 10, 10, 10) 
+  ) +
+  labs(
+    title = "拜仁单队战术价值场", 
+    subtitle = "统一基准色阶下的战术侧重"
   )
+
+ggsave("output_figures/图二_拜仁慕尼黑单队表现图.png", plot = p_map2, width = 5, height = 4, units = "in", dpi = 300)
 ```
 
-图三：战术差异图 (Tactical Difference / Residual Map)计算：$\text{单场图} - \text{基准图}$。
 
-看点：红色区域：战术溢价区（表现远超平均水平，是制胜关键）。
-
-蓝色区域：战术塌陷区（表现低于平均水平，是被压制区域）。
-
-```{r,eval=FALSE}
+```{r}
 # ==========================================
-# 绘图三：战术差异图 (拜仁 vs 联盟平均)
+# 绘图三：拜仁战术差异图
 # ==========================================
-
-# 1. 专门为差异图设定对称的断点 (共 7 个区间)
-# 关注正负差值在 -3 到 3 之间的战术倾斜
-diff_breaks <- c(-Inf, -2, -0.5, -0.1, 0.1, 0.5, 2, Inf)
-
-# 2. 专门配一套发散色阶：深蓝(弱) -> 浅蓝 -> 白(持平) -> 橙红 -> 深红(强)
-diff_colors <- c(
-  "midnightblue",  # 严重落后均值
-  "dodgerblue",    # 落后均值
-  "lightcyan",     # 略微落后
-  "white",         # 与联盟均值持平 (0 附近)
-  "lightsalmon",   # 略微领先
-  "red",           # 领先均值
-  "darkred"        # 绝对战术优势区
-)
-
-# 3. 画图代码
-ggplot(diff_df, aes(x = x, y = y, z = diff_z)) +
+p_map3 <- ggplot(diff_df, aes(x = x, y = y, z = diff_z)) +
   geom_contour_filled(breaks = diff_breaks) +
   scale_fill_manual(
     values = diff_colors,
-    name = "价值溢价\n(拜仁-均值)",
+    name = "价值溢价",
     guide = guide_colorsteps(show.limits = TRUE)
   ) +
   
-  # --- 叠加球场线 ---
-  annotate("rect", xmin=0, xmax=120, ymin=0, ymax=80, fill=NA, color="black", size=0.5) +
-  annotate("segment", x=60, xend=60, y=0, yend=80, color="black", size=0.5) +
+  annotate("rect", xmin=0, xmax=120, ymin=0, ymax=80, fill=NA, color="black", linewidth=0.3) +
+  annotate("segment", x=60, xend=60, y=0, yend=80, color="black", linewidth=0.3) +
   annotate("point", x=60, y=40, color="black", size=1.5) +
-  
-  annotate("rect", xmin=0, xmax=18, ymin=18, ymax=62, fill=NA, color="black", size=0.5) +
-  annotate("rect", xmin=0, xmax=6, ymin=30, ymax=50, fill=NA, color="black", size=0.5) +
+  annotate("rect", xmin=0, xmax=18, ymin=18, ymax=62, fill=NA, color="black", linewidth=0.3) +
+  annotate("rect", xmin=0, xmax=6, ymin=30, ymax=50, fill=NA, color="black", linewidth=0.3) +
   annotate("point", x=12, y=40, color="black", size=1) +
-  annotate("segment", x=0, xend=0, y=36, yend=44, color="black", size=2) +
-  
-  annotate("rect", xmin=102, xmax=120, ymin=18, ymax=62, fill=NA, color="black", size=0.5) +
-  annotate("rect", xmin=114, xmax=120, ymin=30, ymax=50, fill=NA, color="black", size=0.5) +
+  annotate("segment", x=0, xend=0, y=36, yend=44, color="black", linewidth=1.5) +
+  annotate("rect", xmin=102, xmax=120, ymin=18, ymax=62, fill=NA, color="black", linewidth=0.3) +
+  annotate("rect", xmin=114, xmax=120, ymin=30, ymax=50, fill=NA, color="black", linewidth=0.3) +
   annotate("point", x=108, y=40, color="black", size=1) +
-  annotate("segment", x=120, xend=120, y=36, yend=44, color="black", size=2) +
+  annotate("segment", x=120, xend=120, y=36, yend=44, color="black", linewidth=1.5) +
   
-  coord_fixed(ratio = 1) +
-  theme_minimal() +
-  labs(title = "图三：拜仁慕尼黑战术差异图", subtitle = "红色区: 战术优势/活跃区域 | 蓝色区: 被压制/放弃区域") +
+  coord_fixed(ratio = 1, xlim = c(-1, 121), ylim = c(-1, 81), expand = FALSE) +
+  theme_void() + 
   theme(
-    panel.grid = element_blank(), 
-    plot.background = element_rect(fill = "white", color = NA), 
-    text = element_text(color = "black"), 
-    axis.text = element_blank(), 
-    axis.title = element_blank()
+    plot.title = element_text(size = 32, face = "bold", hjust = 0.5, margin = margin(t=5, b = 5)),
+    plot.subtitle = element_text(size = 18, hjust = 0.5, color = "grey20", margin = margin(b = 10)),
+    legend.title = element_text(size = 14, face = "bold"),
+    legend.text = element_text(size = 12),
+    legend.key.height = unit(0.8, "cm"), 
+    plot.background = element_rect(fill = "white", color = NA),
+    plot.margin = margin(10, 10, 10, 10) 
+  ) +
+  labs(
+    title = "拜仁慕尼黑战术差异图", 
+    subtitle = "红色区表优势，蓝色区表弱势"
   )
+
+ggsave("output_figures/图三_拜仁战术差异图.png", plot = p_map3, width = 5, height = 4, units = "in", dpi = 300)
 ```
+
+### 2）球员个人
