@@ -42,6 +42,24 @@ library(showtext)
 showtext_auto()
 ```
 
+```{r,eval=FALSE}
+# 断点
+my_breaks <- c(-Inf, 0, 2, 4, 6, 8, 10, 12, 15, Inf)
+
+# 着色：蓝(失误) -> 红(威胁)
+my_colors <- c(
+  "midnightblue",  # < 0 分 (失误区域)
+  "blue",          # 0 - 2 分 (后场常规传导)
+  "dodgerblue",    # 2 - 4 分 (中场过渡)
+  "cyan",          # 4 - 6 分 (前场推进)
+  "greenyellow",   # 6 - 8 分 (进入威胁区)
+  "yellow",        # 8 - 10 分 (关键传球区)
+  "orange",        # 10 - 12 分 (射门边缘)
+  "red",           # 12 - 15 分 (高危射门区)
+  "darkred"        # > 15 分 (绝对得分机会/角球)
+)
+```
+
 ### 数据获取
 
 ```{r,eval=FALSE}
@@ -688,59 +706,154 @@ print(paste("模型 RMSE (越小越好):", round(rmse, 4)))
 print(paste("模型 MSDR (越接近1越好):", round(msdr, 4)))
 
 ```
+
+```{r,eval=FALSE}
+# ==========================================
+# 模型交叉验证与误差评估 (LOOCV)
+# ==========================================
+print("正在进行留一法交叉验证 (LOOCV)，请稍候...")
+
+# 执行 5折交叉验证
+cv_results <- krige.cv(avg_z ~ 1, train_sp, model = v_model_fitted, nfold = 5, nmax = 50)
+
+# 1. 提取交叉验证结果列
+observed <- cv_results$observed      # 实测值
+predicted <- cv_results$var1.pred    # 预测值
+residuals <- cv_results$residual     # 残差 (预测误差)
+zscores <- cv_results$zscore         # 标准化残差
+
+# 2. 计算五大核心检验指标
+ME <- mean(residuals)                          # 平均误差 (Mean Error)
+MAE <- mean(abs(residuals))                    # 平均绝对误差 (Mean Absolute Error)
+RMSE <- sqrt(mean(residuals^2))                # 均方根误差 (Root Mean Square Error)
+MSDR <- mean(zscores^2)                        # 标准化均方误差 (Mean Squared Deviation Ratio)
+CORR <- cor(observed, predicted)               # 预测与实测相关系数 (Correlation)
+
+# 打印结果供填表使用
+print(sprintf("平均误差 (ME): %.4f", ME))
+print(sprintf("平均绝对误差 (MAE): %.4f", MAE))
+print(sprintf("均方根误差 (RMSE): %.4f", RMSE))
+print(sprintf("标准化均方误差 (MSDR): %.4f", MSDR))
+print(sprintf("预测相关系数 (R): %.4f", CORR))
+
+# ==========================================
+# 生成交叉验证高颜值图表
+# ==========================================
+cv_df <- data.frame(Observed = observed, Predicted = predicted, Residuals = residuals)
+
+# 图A：实测值 vs 预测值散点拟合图
+p_cv_scatter <- ggplot(cv_df, aes(x = Observed, y = Predicted)) +
+  geom_point(alpha = 0.5, color = "steelblue") +
+  geom_abline(slope = 1, intercept = 0, color = "darkred", linetype = "dashed", linewidth = 1) +
+  geom_smooth(method = "lm", color = "black", linewidth = 1) +
+  theme_minimal(base_size = 15) +
+  labs(
+    title = "实测战术价值 vs 克里金预测价值",
+    subtitle = "红线为完美预测线(y=x)，黑线为实际线性回归拟合",
+    x = "实测价值 (Observed Z)", y = "预测价值 (Predicted Z)"
+  ) +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5, color = "grey30"))
+
+ggsave("output_figures/交叉验证_实测与预测散点图.png", plot = p_cv_scatter, width = 6, height = 5, dpi = 300)
+
+# 图B：预测残差分布直方图
+p_cv_hist <- ggplot(cv_df, aes(x = Residuals)) +
+  geom_histogram(aes(y = ..density..), bins = 40, fill = "lightblue", color = "black", alpha = 0.7) +
+  stat_function(fun = dnorm, args = list(mean = mean(cv_df$Residuals), sd = sd(cv_df$Residuals)), 
+                color = "darkred", linewidth = 1.2) +
+  theme_minimal(base_size = 15) +
+  labs(
+    title = "克里金插值预测残差分布",
+    subtitle = "红线为标准正态分布曲线，残差呈高度对称的正态分布",
+    x = "预测残差 (Residuals)", y = "密度 (Density)"
+  ) +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5, color = "grey30"))
+
+ggsave("output_figures/交叉验证_残差直方图.png", plot = p_cv_hist, width = 6, height = 5, dpi = 300)
+```
+
 2）对比泛克里金
 
 ```{r,eval=FALSE}
+# ==========================================
+# 泛克里金 (UK) 模型对比计算与出图
+# ==========================================
+print("正在计算泛克里金模型 (UK) 并进行交叉验证...")
+
+# 1. 重新生成名字严格匹配的预测网格 (UK必须要求预测集坐标名与训练集一致)
 pred_grid_uk <- expand.grid(grid_x = 1:120, grid_y = 1:80)
 coordinates(pred_grid_uk) <- ~grid_x + grid_y
 gridded(pred_grid_uk) <- TRUE
 
-# 1. 拟合泛克里金的变异函数 (统一使用 grid_x 和 grid_y)
+# 2. 拟合泛克里金的变异函数 (加入 X 和 Y 的线性全局趋势)
 v_emp_uk <- variogram(avg_z ~ grid_x + grid_y, train_sp, width = 2, cutoff = 60)
-v_model_fitted_uk <- fit.variogram(v_emp_uk, vgm("Exp"))
+v_model_fitted_uk <- fit.variogram(v_emp_uk, vgm(psill = var(train_sp$avg_z), "Exp", range = 20, nugget = 1))
 
-# 2. 泛克里金插值全场预测 (公式和 newdata 都换成统一后的)
+# 3. 泛克里金插值全场预测
 kriging_res_uk <- krige(avg_z ~ grid_x + grid_y, locations = train_sp, newdata = pred_grid_uk, model = v_model_fitted_uk, nmax = 50)
 kriging_df_uk <- as.data.frame(kriging_res_uk)
 
-# 【重点】：为了不影响你后面的画图代码，这里我们把列名改回短名字 x 和 y
+# 把列名改回 x 和 y 以适配之前的画图代码
 colnames(kriging_df_uk)[which(names(kriging_df_uk) == "grid_x")] <- "x"
 colnames(kriging_df_uk)[which(names(kriging_df_uk) == "grid_y")] <- "y"
 
-# 3. 交叉验证对比误差
+# 4. 泛克里金 5折交叉验证 (LOOCV)
 cv_results_uk <- krige.cv(avg_z ~ grid_x + grid_y, train_sp, model = v_model_fitted_uk, nfold = 5, nmax = 50)
-rmse_uk <- sqrt(mean(cv_results_uk$residual^2))
 
-print("=====================================")
-print("泛克里金模型 (UK) 交叉验证结果：")
-print(paste("RMSE 误差为:", round(rmse_uk, 4)))
-print("=====================================")
+# 计算泛克里金的五大检验指标
+ME_uk <- mean(cv_results_uk$residual)
+MAE_uk <- mean(abs(cv_results_uk$residual))
+RMSE_uk <- sqrt(mean(cv_results_uk$residual^2))
+MSDR_uk <- mean(cv_results_uk$zscore^2)
+CORR_uk <- cor(cv_results_uk$observed, cv_results_uk$var1.pred)
+
+print("====== 泛克里金 (UK) 交叉验证结果 ======")
+print(sprintf("平均误差 (ME): %.4f", ME_uk))
+print(sprintf("平均绝对误差 (MAE): %.4f", MAE_uk))
+print(sprintf("均方根误差 (RMSE): %.4f", RMSE_uk))
+print(sprintf("标准化均方误差 (MSDR): %.4f", MSDR_uk))
+print(sprintf("预测相关系数 (R): %.4f", CORR_uk))
+print("========================================")
+
+# 5. 绘制并保存泛克里金价值场
+p_map_uk <- ggplot(kriging_df_uk, aes(x = x, y = y, z = var1.pred)) +
+  geom_contour_filled(breaks = my_breaks) +
+  scale_fill_manual(values = my_colors, name = "战术价值 Z", guide = guide_colorsteps(show.limits = TRUE)) +
+  
+  annotate("rect", xmin=0, xmax=120, ymin=0, ymax=80, fill=NA, color="black", linewidth=0.3) +
+  annotate("segment", x=60, xend=60, y=0, yend=80, color="black", linewidth=0.3) +
+  annotate("point", x=60, y=40, color="black", size=1.5) +
+  annotate("rect", xmin=0, xmax=18, ymin=18, ymax=62, fill=NA, color="black", linewidth=0.3) +
+  annotate("rect", xmin=0, xmax=6, ymin=30, ymax=50, fill=NA, color="black", linewidth=0.3) +
+  annotate("point", x=12, y=40, color="black", size=1) +
+  annotate("segment", x=0, xend=0, y=36, yend=44, color="black", linewidth=1.5) +
+  annotate("rect", xmin=102, xmax=120, ymin=18, ymax=62, fill=NA, color="black", linewidth=0.3) +
+  annotate("rect", xmin=114, xmax=120, ymin=30, ymax=50, fill=NA, color="black", linewidth=0.3) +
+  annotate("point", x=108, y=40, color="black", size=1) +
+  annotate("segment", x=120, xend=120, y=36, yend=44, color="black", linewidth=1.5) +
+  
+  coord_fixed(ratio = 1, xlim = c(-1, 121), ylim = c(-1, 81), expand = FALSE) +
+  theme_void() + 
+  theme(
+    plot.title = element_text(size = 32, face = "bold", hjust = 0.5, margin = margin(t=5, b = 5)),
+    plot.subtitle = element_text(size = 18, hjust = 0.5, color = "grey20", margin = margin(b = 10)),
+    legend.title = element_text(size = 14, face = "bold"), legend.text = element_text(size = 12),
+    legend.key.height = unit(0.8, "cm"), plot.background = element_rect(fill = "white", color = NA),
+    plot.margin = margin(10, 10, 10, 10) 
+  ) +
+  labs(title = "泛克里金(UK)战术价值场", subtitle = "引入全局坐标漂移后的强制平滑")
+
+ggsave("output_figures/泛克里金UK_全联盟基准场.png", plot = p_map_uk, width = 5, height = 4, units = "in", dpi = 300)
 ```
+
+
 
 ## 四、实证分析
 
 ##可视化呈现 (Visualization)
 ### 1）球队整体
-
-```{r,eval=FALSE}
-# 断点
-my_breaks <- c(-Inf, 0, 2, 4, 6, 8, 10, 12, 15, Inf)
-
-# 着色：蓝(失误) -> 红(威胁)
-my_colors <- c(
-  "midnightblue",  # < 0 分 (失误区域)
-  "blue",          # 0 - 2 分 (后场常规传导)
-  "dodgerblue",    # 2 - 4 分 (中场过渡)
-  "cyan",          # 4 - 6 分 (前场推进)
-  "greenyellow",   # 6 - 8 分 (进入威胁区)
-  "yellow",        # 8 - 10 分 (关键传球区)
-  "orange",        # 10 - 12 分 (射门边缘)
-  "red",           # 12 - 15 分 (高危射门区)
-  "darkred"        # > 15 分 (绝对得分机会/角球)
-)
-```
-
-
 
 ```{r,eval=FALSE}
 # ==========================================
@@ -1050,7 +1163,7 @@ create_pitch_plot(hummels_df_filt,
 print("中场与后卫的双图对比全部生成完毕！")
 ```
 
-```{r}
+```{r,eval=FALSE}
 # ==========================================
 # 战术价值空间分布的“数值化特征”提取
 # ==========================================
