@@ -20,41 +20,6 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for syntax highlighting */
-html { -webkit-text-size-adjust: 100%; }
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
 </style>
 
 
@@ -411,13 +376,14 @@ window.Quarto = {
 <section id="普通克里金插值法及其数学推导" class="level3">
 <h3 class="anchored" data-anchor-id="普通克里金插值法及其数学推导">3.2.3 普通克里金插值法及其数学推导</h3>
 <p>普通克里金法是地统计学中应用最为广泛的空间局部插值方法。与传统基于纯几何距离的反距离权重法（IDW）不同，普通克里金法不仅仅考虑已知点与预测点之间的距离，更通过变异函数将已知点之间的空间拓扑关系（如数据的聚集与遮蔽效应）纳入计算。它被称为“最佳线性无偏估计”（BLUE），其核心在于在满足无偏性的前提下，使得预测误差的方差最小。</p>
-<section id="理论前提内蕴平稳性假设" class="level4">
-<h4 class="anchored" data-anchor-id="理论前提内蕴平稳性假设">1. 理论前提：内蕴平稳性假设</h4>
+<section id="理论前提平稳性假设" class="level4">
+<h4 class="anchored" data-anchor-id="理论前提平稳性假设">1. 理论前提：平稳性假设</h4>
 <p>普通克里金法的应用建立在内蕴平稳性假设之上。在足球场空间分布的语境下，该假设意味着：</p>
 <ol type="1">
 <li><strong>期望的恒定性</strong>：在局部的搜索邻域内，球权战术价值 <span class="math inline">\(Z(x)\)</span> 的数学期望是一个常数，虽未知但固定，即 <span class="math inline">\(E[Z(x)] = c\)</span>（常数）。</li>
 <li><strong>增量的平稳性</strong>：球场上任意两点 <span class="math inline">\(x_i\)</span> 和 <span class="math inline">\(x_i+h\)</span> 处的球权价值之差的方差，仅与两点间的空间向量 <span class="math inline">\(h\)</span> 有关，而与它们在球场上的绝对位置无关。这一特性正是前文构建变异函数 <span class="math inline">\(\gamma(h)\)</span> 的理论基础。</li>
 </ol>
+<p>尽管足球场上的战术价值存在显著的向心与向前趋势，但本研究在将在构建 <span class="math inline">\(Z\)</span> 模型时，已通过引入空间权重函数（<span class="math inline">\(W_{space}\)</span>）将宏观的空间漂移显性化地内化于变量自身。因此，经过空间赋权后的 <span class="math inline">\(Z\)</span> 值在局部搜索邻域内已满足内蕴平稳性假设，使用普通克里金能有效避免对空间趋势的重复计算，还能在保证无偏估计的同时降低方程求解的矩阵奇异性风险。</p>
 </section>
 <section id="线性无偏估计的构建" class="level4">
 <h4 class="anchored" data-anchor-id="线性无偏估计的构建">2. 线性无偏估计的构建</h4>
@@ -621,67 +587,59 @@ window.Quarto = {
 <section id="模型算法的程序实现与逻辑校验" class="level3">
 <h3 class="anchored" data-anchor-id="模型算法的程序实现与逻辑校验">3.3.3 模型算法的程序实现与逻辑校验</h3>
 <p>基于上述严密的数学设定，本研究利用 R 语言中的 <code>dplyr</code> 数据操作框架完成了 Z 模型的程序化落地。核心代码通过 <code>case_when</code> 嵌套逻辑，精确计算了全赛季每一条事件记录的合成最终价值 <span class="math inline">\(Z\)</span>：</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>final_model_data <span class="ot">&lt;-</span> full_season_cleaned <span class="sc">%&gt;%</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. 识别并归类定位球等特殊事件</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">custom_type =</span> <span class="fu">case_when</span>(</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>      type.name <span class="sc">==</span> <span class="st">"Pass"</span> <span class="sc">&amp;</span> pass.type.name <span class="sc">==</span> <span class="st">"Corner"</span> <span class="sc">~</span> <span class="st">"Corner"</span>,</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>      type.name <span class="sc">==</span> <span class="st">"Pass"</span> <span class="sc">&amp;</span> pass.type.name <span class="sc">==</span> <span class="st">"Free Kick"</span> <span class="sc">~</span> <span class="st">"Free Kick"</span>,</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> type.name</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. 计算向心度与基础分</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">centrality_score =</span> <span class="dv">1</span> <span class="sc">-</span> (<span class="fu">abs</span>(location.y <span class="sc">-</span> <span class="dv">40</span>) <span class="sc">/</span> <span class="dv">40</span>),</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">s_base =</span> <span class="fu">case_when</span>(</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Shot"</span>, <span class="st">"Goal Keeper"</span>) <span class="sc">~</span> <span class="dv">10</span>,</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">==</span> <span class="st">"Corner"</span> <span class="sc">~</span> <span class="dv">7</span>, </span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">==</span> <span class="st">"Free Kick"</span> <span class="sc">~</span> <span class="dv">6</span>,</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>      type.name <span class="sc">==</span> <span class="st">"Pass"</span> <span class="sc">&amp;</span> pass.shot_assist <span class="sc">==</span> <span class="cn">TRUE</span> <span class="sc">~</span> <span class="dv">8</span>,</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Clearance"</span>, <span class="st">"Block"</span>) <span class="sc">~</span> <span class="dv">8</span>,</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Interception"</span>, <span class="st">"Ball Recovery"</span>, <span class="st">"Foul Won"</span>, <span class="st">"Dribble"</span>) <span class="sc">~</span> <span class="dv">6</span>,</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Duel"</span>, <span class="st">"Pressure"</span>, <span class="st">"Shield"</span>) <span class="sc">~</span> <span class="dv">4</span>,</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">%in%</span> error_types <span class="sc">~</span> <span class="sc">-</span><span class="dv">3</span>,</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="dv">1</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 3. 计算多维空间权重</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">w_space =</span> <span class="fu">case_when</span>(</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">==</span> <span class="st">"Corner"</span> <span class="sc">~</span> <span class="fl">2.5</span>,</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">==</span> <span class="st">"Free Kick"</span> <span class="sc">~</span> <span class="fl">2.0</span>,</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">%in%</span> error_types <span class="sc">~</span> <span class="fl">0.5</span>,</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>      custom_type <span class="sc">%in%</span> def_types <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> ((<span class="dv">120</span> <span class="sc">-</span> location.x) <span class="sc">/</span> <span class="dv">120</span>) <span class="sc">+</span> (<span class="fl">0.5</span> <span class="sc">*</span> centrality_score),</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> (location.x <span class="sc">/</span> <span class="dv">120</span>) <span class="sc">+</span> (<span class="fl">0.5</span> <span class="sc">*</span> centrality_score)</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 4. 压力系数与质量系数修正</span></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">c_pressure =</span> <span class="fu">ifelse</span>(under_pressure <span class="sc">==</span> <span class="cn">TRUE</span>, <span class="fl">1.5</span>, <span class="fl">1.0</span>),</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">q_height =</span> <span class="fu">case_when</span>(</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>      type.name <span class="sc">==</span> <span class="st">"Pass"</span> <span class="sc">&amp;</span> pass.height.name <span class="sc">==</span> <span class="st">"High Pass"</span> <span class="sc">~</span> <span class="fl">0.8</span>,</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>      type.name <span class="sc">==</span> <span class="st">"Pass"</span> <span class="sc">&amp;</span> pass.height.name <span class="sc">==</span> <span class="st">"Low Pass"</span> <span class="sc">~</span> <span class="fl">0.9</span>,</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fl">1.0</span></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 5. 合成最终战术价值 Z</span></span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>    <span class="at">value_z =</span> s_base <span class="sc">*</span> w_space <span class="sc">*</span> c_pressure <span class="sc">*</span> q_height</span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(value_z))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>为确保特征赋值与预期设计一致，模型执行了分组均值校验（Group Means Check）：</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 检查核心分组均值是否符合战术逻辑</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>final_model_data <span class="sc">%&gt;%</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(custom_type) <span class="sc">%&gt;%</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">Avg_Base_Score =</span> <span class="fu">mean</span>(s_base),</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">Avg_Space_Weight =</span> <span class="fu">mean</span>(w_space), </span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">Avg_Total_Z =</span> <span class="fu">mean</span>(value_z),</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">Count =</span> <span class="fu">n</span>()</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(custom_type <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Corner"</span>, <span class="st">"Free Kick"</span>, <span class="st">"Pass"</span>, <span class="st">"Shot"</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(Avg_Total_Z))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>检验结果证实，不同动作类型合成的终极战术价值 <span class="math inline">\(Z\)</span> 呈现出预期中的梯次分布，至此，克里金插值分析的核心输入变量已准备就绪。</p>
+<p>本研究的数据预处理、特征赋权以及克里金空间插值建模均依托 R 语言核心生态（如 tidyverse, gstat, sp 宏包）实现。为保证研究的可重复性，本模型的核心算法与数据清洗流程代码已完整收录于论文附录，并同步开源至个人的 GitHub 代码仓库。经前文交叉验证（LOOCV）确认，选定的普通克里金法已具备良好的预测精度与平稳性。之后将正式依托该模型，对德甲赛场的宏观战术分布与球队表现展开实证测度。</p>
+<section id="普通克里金模型交叉验证误差量化" class="level4">
+<h4 class="anchored" data-anchor-id="普通克里金模型交叉验证误差量化">1.普通克里金模型交叉验证误差量化</h4>
+<p><strong>表 3-2 普通克里金模型交叉验证误差量化表</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 22%">
+<col style="width: 27%">
+<col style="width: 27%">
+<col style="width: 22%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">评价指标名称</th>
+<th style="text-align: center;">英文缩写</th>
+<th style="text-align: center;">交叉验证结果</th>
+<th style="text-align: left;">统计学意义</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><strong>平均误差</strong></td>
+<td style="text-align: center;"><span class="math inline">\(ME\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\mathbf{0.0020}\)</span></td>
+<td style="text-align: left;">极度接近 0，证实模型估计满足严格的无偏性（Unbiased），不存在系统性偏差。</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>平均绝对误差</strong></td>
+<td style="text-align: center;"><span class="math inline">\(MAE\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\mathbf{0.5899}\)</span></td>
+<td style="text-align: left;">相比于 <span class="math inline">\(Z\)</span> 模型较大的评分跨度，绝对误差极小，说明模型整体拟合优度高。</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>均方根误差</strong></td>
+<td style="text-align: center;"><span class="math inline">\(RMSE\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\mathbf{1.1674}\)</span></td>
+<td style="text-align: left;">对异常值具有惩罚敏感性，误差控制在 1.16 证实了局部高危区域预测的高精度。</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><strong>标准化均方误差</strong></td>
+<td style="text-align: center;"><span class="math inline">\(MSDR\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\mathbf{1.4565}\)</span></td>
+<td style="text-align: left;">接近理想值 1，证明克里金方差对预测不确定性的估计处于合理区间。</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>预测相关系数</strong></td>
+<td style="text-align: center;"><span class="math inline">\(R\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\mathbf{0.8862}\)</span></td>
+<td style="text-align: left;">实测值与预测值呈高度正相关（突破 0.85 阈值），模型成功且精准地捕获了战术价值的底层空间分布规律。</td>
+</tr>
+</tbody>
+</table>
+</section>
 </section>
 </section>
 </section>
