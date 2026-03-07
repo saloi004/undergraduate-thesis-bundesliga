@@ -273,7 +273,7 @@ $$\sigma_K^2 = \sum_{i=1}^{n} \lambda_i \gamma(x_i, x_0) + \mu$$
 
 **数据支持：定位球的高转化率溢价** 传统基于欧氏距离的空间模型往往会严重低估角球的价值，因为其发生地位于球场四个角落（远离球门中心）。然而，对德甲数据的实证检验推翻了这一直觉：
 
-![不同传球类型的射门助攻率](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/%E5%BE%B7%E7%94%B215_16%E8%B5%9B%E5%AD%A3%E4%BC%A0%E7%90%83%E5%8A%A9%E6%94%BB%E7%8E%87%E5%AF%B9%E6%AF%94.png?raw=true)
+![传球类型助攻率对比率](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/EDA_%E4%BC%A0%E7%90%83%E7%B1%BB%E5%9E%8B%E5%8A%A9%E6%94%BB%E7%8E%87%E5%AF%B9%E6%AF%94.png?raw=true)
 
 数据结果显示，角球直接形成射门助的概率远高于运动战常规传球。这证明了定位球具有跨越空间距离直接威胁球门的能力，为后续模型中赋予定位球极高的基础分与空间豁免权提供了坚实依据。
 
@@ -283,7 +283,7 @@ $$\sigma_K^2 = \sum_{i=1}^{n} \lambda_i \gamma(x_i, x_0) + \mu$$
 
 **数据验证：射门事件的二维核密度分布** 为验证上述理论，本研究提取全赛季射门数据并绘制了空间密度分布图：
 
-![德甲射门密度分布](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/%E5%BE%B7%E7%94%B215_16%E8%B5%9B%E5%AD%A3%E5%B0%84%E9%97%A8%E5%AF%86%E5%BA%A6.png?raw=true)
+![射门密度分布](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/EDA_%E5%B0%84%E9%97%A8%E5%AF%86%E5%BA%A6%E5%88%86%E5%B8%83.png?raw=true
 
 如核密度图所示，绝对得分机会高度向心聚拢于对方禁区中路（$X > 100, Y \in [30, 50]$）。这在统计学上完美印证了“向心推进”的战术溢价规律。
 
@@ -293,7 +293,7 @@ $$\sigma_K^2 = \sum_{i=1}^{n} \lambda_i \gamma(x_i, x_0) + \mu$$
 
 **数据验证：防守压力下的失误率激增**
 
-![德甲防守压力下失误率对比](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/%E5%BE%B7%E7%94%B215_16%E8%B5%9B%E5%AD%A3%E5%8E%8B%E5%8A%9B%E5%A4%B1%E8%AF%AF%E7%8E%87%E5%AF%B9%E6%AF%94.png?raw=true)
+![不同压力失误率对比](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/EDA_%E4%B8%8D%E5%90%8C%E5%8E%8B%E5%8A%9B%E5%A4%B1%E8%AF%AF%E7%8E%87%E5%AF%B9%E6%AF%94.png?raw=true)
 
 统计证实，受压迫状态下的技术失误率呈倍数级增加。基于“风险与收益对等”法则，在极端防守约束下完成的高难度战术动作理应获得溢价补偿，这为设定压力系数提供了实证支撑。
 
@@ -301,7 +301,7 @@ $$\sigma_K^2 = \sum_{i=1}^{n} \lambda_i \gamma(x_i, x_0) + \mu$$
 
 **理论支持：瓜迪奥拉的“地面控制”战术哲学** 本研究的实证对象为 15/16 赛季的德甲联赛（瓜迪奥拉执教时期）。现代传控足球的战术哲学极度强调对球权的绝对控制，而地面传球（Ground Pass）相比于高空球（High Pass）拥有更高的球权保留率和更低的失误方差。因此，引入传球高度作为控球质量修正参数（$Q_{quality}$），是对赛事时代背景与主流战术理念的客观还原。
 
-**数据验证：随着传球高度失误率激增** ![德甲不同传球高度失误率对比](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/%E5%BE%B7%E7%94%B215_16%E8%B5%9B%E5%AD%A3%E4%BC%A0%E7%90%83%E9%AB%98%E5%BA%A6%E5%A4%B1%E8%AF%AF%E7%8E%87%E5%AF%B9%E6%AF%94.png?raw=true)
+**数据验证：随着传球高度失误率激增** ![传球高度失误率对比](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/EDA_%E4%BC%A0%E7%90%83%E9%AB%98%E5%BA%A6%E5%A4%B1%E8%AF%AF%E7%8E%87%E5%AF%B9%E6%AF%94.png?raw=true)
 
 ### 3.3.2 Z 模型的多维特征乘法构建
 
@@ -381,7 +381,7 @@ $$Q_{quality} = \begin{cases} 0.8, & \text{if High Pass (高空球)} \\ 0.9, & \
 
 本研究计算了德甲球权价值分布的空间实验变异函数，并采用指数模型（Exponential Model）进行了理论拟合。
 
-![德甲球权价值空间变异函数](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/%E5%BE%B7%E7%94%B215_16%E8%B5%9B%E5%AD%A3_%E5%8F%98%E5%BC%82%E5%87%BD%E6%95%B0%E6%8B%9F%E5%90%88%E5%9B%BE.png?raw=true)
+![变异函数拟合图](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Model_%E5%8F%98%E5%BC%82%E5%87%BD%E6%95%B0%E6%8B%9F%E5%90%88%E5%9B%BE.png?raw=true)
 
 该图在统计学层面为普通克里金插值提供了核心参数化依据，展示了以下关键战术特征：
 
@@ -446,7 +446,7 @@ $$
 
 除数值指标外，本研究进一步对预测残差进行了可视化检验。如图 3-2 所示，克里金插值的预测残差（Residuals）呈现出极其完美的零均值正态分布形态（红线为理论正态曲线），不存在明显的长尾或偏态现象。
 
-![交叉验证残差直方图](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/%E4%BA%A4%E5%8F%89%E9%AA%8C%E8%AF%81_%E6%AE%8B%E5%B7%AE%E7%9B%B4%E6%96%B9%E5%9B%BE.png?raw=true) **图 3-2 克里金插值预测残差密度分布图**
+![普通克里金交叉验证残差分布直方图](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Model_%E6%AE%8B%E5%B7%AE%E5%88%86%E5%B8%83%E7%9B%B4%E6%96%B9%E5%9B%BE.png?raw=true) 
 
 上述交叉验证的多维结果共同证实：本研究所构建的足球空间价值推演模型，不仅在理论逻辑上满足无偏估计假定，在实证数据上也展现出了卓越的稳健性与高预测精度（$R = 0.8862$）。
 
@@ -476,9 +476,9 @@ $$
 
 ::: {#fig-ok-vs-uk layout-ncol=2}
 
-![普通克里金 (OK) 基准场](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/%E5%9B%BE%E4%B8%80_%E5%BE%B7%E7%94%B2%E7%90%83%E6%9D%83%E4%BB%B7%E5%80%BC%E5%9F%BA%E5%87%86%E5%9C%BA.png?raw=true){#fig-ok}
+![全联盟普通克里金(OK)基准场](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Macro_%E5%85%A8%E8%81%94%E7%9B%9F_OK%E5%9F%BA%E5%87%86%E5%9C%BA.png?raw=true){#fig-ok}
 
-![泛克里金 (UK) 基准场](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/%E6%B3%9B%E5%85%8B%E9%87%8C%E9%87%91UK_%E5%85%A8%E8%81%94%E7%9B%9F%E5%9F%BA%E5%87%86%E5%9C%BA.png?raw=true){#fig-uk}
+![全联盟泛克里金 (UK) 基准场](){#fig-uk}
 
 图 3-4 普通克里金与泛克里金生成的德甲全联盟价值场视觉对比
 :::
