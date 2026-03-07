@@ -238,7 +238,7 @@ grid_data <- final_model_data %>%
 ```
 
 
-#四、变异函数拟合与模型交叉验证 (LOOCV)
+# 四、变异函数拟合与模型交叉验证 (LOOCV)
 ```{r,eval=FALSE}
 # 拟合实验与理论变异函数 (OK)
 train_sp <- grid_data
