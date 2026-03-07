@@ -472,18 +472,12 @@ $$
 
 ### 3.6.2 价值场视觉重构对比
 
-除了数值层面的误差对比，本研究分别使用两种算法重构了德甲全联盟战术价值基准场（见图 3-4）。
+除了数值层面的误差对比，本研究分别使用两种算法重构了德甲全联盟战术价值基准场。
 
-::: {#fig-ok-vs-uk layout-ncol=2}
+![全联盟普通克里金(OK)基准场](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Macro_%E5%85%A8%E8%81%94%E7%9B%9F_OK%E5%9F%BA%E5%87%86%E5%9C%BA.png?raw=true)
 
-![全联盟普通克里金(OK)基准场](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Macro_%E5%85%A8%E8%81%94%E7%9B%9F_OK%E5%9F%BA%E5%87%86%E5%9C%BA.png?raw=true){#fig-ok}
-
-![全联盟泛克里金 (UK) 基准场](){#fig-uk}
-
-图 3-4 普通克里金与泛克里金生成的德甲全联盟价值场视觉对比
-:::
-
-观察 @fig-ok-vs-uk 可知，出乎传统空间插值直觉的是，两种算法生成的战术价值基准场在宏观分布与微观热点上**呈现出极度的高度一致性**。无论是对方大禁区前沿的绝对深红区，还是中后场的安全过渡区，UK 并未因引入全局坐标变量而在视觉上产出明显的增量信息。
+![全联盟泛克里金 (UK) 基准场](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Macro_%E5%85%A8%E8%81%94%E7%9B%9F_UK%E5%9F%BA%E5%87%86%E5%9C%BA.png?raw=true)
+观察可知，出乎传统空间插值直觉的是，两种算法生成的战术价值基准场在宏观分布与微观热点上**呈现出极度的高度一致性**。无论是对方大禁区前沿的绝对深红区，还是中后场的安全过渡区，UK 并未因引入全局坐标变量而在视觉上产出明显的增量信息。
 
 ### 3.6.3 选型结论：奥卡姆剃刀与 $Z$ 模型的自洽性反证
 
@@ -501,18 +495,14 @@ $$
 
 ### 3.7.1 宏观全景视角：全联盟价值基准场的剥离效应
 
-本研究首先提取了德甲 15/16 全赛季的百万级触球坐标，分别重构了德甲全联盟的宏观基准场（见图 3-5）。
+本研究首先提取了德甲 15/16 全赛季的百万级触球坐标，分别重构了德甲全联盟的宏观基准场。
 
-::: {#fig-kde-vs-kriging-league layout-ncol=2}
 
-![德甲全联盟 KDE 触球频率场 (传统方法)](output_figures/全联盟_KDE对比图.png){#fig-kde-league}
+![全联盟 KDE 触球频率场 (传统方法)](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Macro_%E5%85%A8%E8%81%94%E7%9B%9F_KDE%E5%9F%BA%E5%87%86%E5%9C%BA.png?raw=true)
 
-![德甲全联盟 克里金价值基准场 (本研究模型)](output_figures/图一_德甲球权价值基准场.png){#fig-kriging-league}
+![全联盟普通克里金(OK)基准场](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Macro_%E5%85%A8%E8%81%94%E7%9B%9F_OK%E5%9F%BA%E5%87%86%E5%9C%BA.png?raw=true)
 
-图 3-5 大样本下传统 KDE 全联盟频率密度图与克里金全联盟战术价值场的宏观对比
-:::
-
-观察 @fig-kde-vs-kriging-league，在德甲全样本的宏观尺度下，两类算法呈现出了截然不同的空间推断结果：
+观察得到，在德甲全样本的宏观尺度下，两类算法呈现出了截然不同的空间推断结果：
 
 1. **“海量庸常数据”的视觉霸权（KDE的局限）**：在全联盟 KDE 热图（左图）中，最深的热点区域形成了一个巨大的椭圆形，极其臃肿地淤积于中圈及本方防守三区。这是因为在现代足球中，绝大部分控球时间都消耗在后场的安全倒脚上（高频低危动作）。KDE 作为单纯的“点位频率估算”，不可避免地赋予了这些庸常数据极高的视觉权重，导致真正产生致命威胁的进攻三区在图中显得黯淡无光。
 2. **“高价值空间”的提纯剥离（克里金的优势）**：反观基于克里金与 $Z$ 模型的全联盟价值场（右图），由于 $Z$ 模型对高危区域的高难度动作赋予了指数级的权重补偿，克里金图谱中的“绝对深红区”极其精准地推演至了对方大禁区前沿（Zone 14）及两侧底线传中区。它在视觉上彻底剔除了中场倒脚的冗余噪音，完美提纯了德甲联赛真实的“战术红利区”。
@@ -521,16 +511,12 @@ $$
 
 在实际赛后复盘中，教练组往往需要针对“单一特定场次”进行空间解剖。然而，单场比赛单支球队的触球样本通常仅有 600-800 次，这种空间稀疏性对算法的“小样本鲁棒性”提出了极大挑战。为此，本研究随机抽取拜仁慕尼黑的单场比赛数据进行了微观极限测试（见图 3-6）。
 
-::: {#fig-kde-vs-kriging-single layout-ncol=2}
 
-![拜仁单场 KDE 触球频率场](output_figures/图十二_单场_KDE对比图.png){#fig-kde-single}
+![拜仁单场 KDE 触球频率场](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Micro_%E6%8B%9C%E4%BB%81%E5%8D%95%E5%9C%BA_KDE%E5%AF%B9%E6%AF%94%E5%9B%BE.png?raw=true)
 
-![拜仁单场 克里金战术价值场](output_figures/图十三_单场_Kriging对比图.png){#fig-kriging-single}
+![拜仁单场 克里金战术价值场](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Micro_%E6%8B%9C%E4%BB%81%E5%8D%95%E5%9C%BA_OK%E5%AF%B9%E6%AF%94%E5%9B%BE.png?raw=true)
 
-图 3-6 单场稀疏样本下传统 KDE 密度图与克里金价值场的鲁棒性实证对比
-:::
-
-观察 @fig-kde-vs-kriging-single 可发现，在单场小样本下，两种方法产生了决定性的推断落差：
+观察得到，在单场小样本下，两种方法产生了决定性的推断落差：
 
 1. **“斑块化碎裂”与后场迷信（KDE 的失效）**：在单场 KDE 热图（左图）中，由于缺乏足够的数据点支撑，原本平滑的密度表面发生了严重的“斑块化碎裂”。由于拜仁存在大量中卫与后腰间的安全倒脚，KDE 毫无悬念地将图谱中的“高热斑块”锚定在了本方半场，完全丢失了前场进攻三区的战术细节。
 2. **先验知识引导下的强鲁棒性（克里金的降维打击）**：反观基于克里金的单场价值场（右图），即使面对极其稀疏的数据，模型依然输出了一张极度平滑、战术指向明确的高质量热图。其根本原因在于：**本研究的克里金插值调用了前文（3.4节）基于全赛季样本拟合的“全局变异函数”作为底层先验结构。** 在这种强大的地统计学先验约束下，克里金模型如手术刀般精准地将单场比赛的“深红绝对威胁区”还原在了对方大禁区弧顶。

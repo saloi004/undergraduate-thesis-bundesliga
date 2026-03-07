@@ -347,6 +347,50 @@ p_diff <- ggplot(diff_df, aes(x = x, y = y, z = diff_z)) +
   labs(title = "拜仁慕尼黑战术差异图", subtitle = "红区表溢价强于联盟均值，蓝区表劣势")
 ggsave("output_figures/Macro_拜仁_差异图.png", plot = p_diff, width = 5, height = 4, dpi = 300, bg="white")
 ```
+```{r}
+# ==========================================
+# 补充：泛克里金 (UK) 模型对比与出图 (用于论文 3.6 节对比)
+# ==========================================
+print("正在计算泛克里金模型 (UK) 并进行交叉验证...")
+
+# 1. 重新生成名字严格匹配的预测网格 (UK必须要求预测集坐标名与训练集一致)
+pred_grid_uk <- expand.grid(grid_x = 1:120, grid_y = 1:80)
+coordinates(pred_grid_uk) <- ~grid_x + grid_y
+gridded(pred_grid_uk) <- TRUE
+
+# 2. 拟合泛克里金的变异函数 (加入 X 和 Y 的线性全局趋势)
+v_emp_uk <- variogram(avg_z ~ grid_x + grid_y, train_sp, width = 2, cutoff = 60)
+v_model_fitted_uk <- fit.variogram(v_emp_uk, vgm(psill = var(train_sp$avg_z), "Exp", range = 20, nugget = 1))
+
+# 3. 泛克里金 5折交叉验证 (LOOCV) - 用于填论文表 3-3
+cv_results_uk <- krige.cv(avg_z ~ grid_x + grid_y, train_sp, model = v_model_fitted_uk, nfold = 5, nmax = 50)
+
+print("====== 泛克里金 (UK) 交叉验证结果 (备用核对) ======")
+print(sprintf("均方根误差 (RMSE): %.4f", sqrt(mean(cv_results_uk$residual^2))))
+print(sprintf("标准化均方误差 (MSDR): %.4f", mean(cv_results_uk$zscore^2)))
+print(sprintf("平均绝对误差 (MAE): %.4f", mean(abs(cv_results_uk$residual))))
+print(sprintf("平均误差 (ME): %.4f", mean(cv_results_uk$residual)))
+print(sprintf("预测相关系数 (R): %.4f", cor(cv_results_uk$observed, cv_results_uk$var1.pred)))
+print("==================================================")
+
+# 4. 泛克里金插值全场预测并出图
+kriging_res_uk <- krige(avg_z ~ grid_x + grid_y, locations = train_sp, newdata = pred_grid_uk, model = v_model_fitted_uk, nmax = 50)
+kriging_df_uk <- as.data.frame(kriging_res_uk)
+
+# 把列名改回 x 和 y 以适配封装好的画图函数
+colnames(kriging_df_uk)[which(names(kriging_df_uk) == "grid_x")] <- "x"
+colnames(kriging_df_uk)[which(names(kriging_df_uk) == "grid_y")] <- "y"
+
+# 5. 调用全局高颜值画图函数，并按新规范命名保存！
+create_pitch_plot(
+  kriging_df_uk, 
+  "泛克里金(UK)战术价值场", 
+  "引入全局坐标漂移后的强制平滑", 
+  "output_figures/Macro_全联盟_UK基准场.png"
+)
+
+print("泛克里金 (UK) 基准场已生成，并已按照规范命名为 Macro_全联盟_UK基准场.png！")
+```
 
 
 # 六、微观极限鲁棒性测试：拜仁单场 KDE vs OK
