@@ -847,6 +847,124 @@ p_map_uk <- ggplot(kriging_df_uk, aes(x = x, y = y, z = var1.pred)) +
 
 ggsave("output_figures/泛克里金UK_全联盟基准场.png", plot = p_map_uk, width = 5, height = 4, units = "in", dpi = 300)
 ```
+3）对比核函数
+```{r}
+# ==========================================
+# 3.7.2 节用图：单场比赛 KDE 与 克里金价值场对比
+# ==========================================
+print("正在提取单场比赛数据进行对比测试...")
+
+# 重新定义高颜值绘图的通用函数 (确保 R 内存中有这个函数)
+create_pitch_plot <- function(kriging_df, title_text, subtitle_text, save_path) {
+  p <- ggplot(kriging_df, aes(x = x, y = y, z = var1.pred)) +
+    geom_contour_filled(breaks = my_breaks) +
+    scale_fill_manual(
+      values = my_colors,
+      name = "战术价值 Z",
+      guide = guide_colorsteps(show.limits = TRUE)
+    ) +
+    
+    # 球场线辅助
+    annotate("rect", xmin=0, xmax=120, ymin=0, ymax=80, fill=NA, color="black", linewidth=0.3) +
+    annotate("segment", x=60, xend=60, y=0, yend=80, color="black", linewidth=0.3) +
+    annotate("point", x=60, y=40, color="black", size=1.5) +
+    annotate("rect", xmin=0, xmax=18, ymin=18, ymax=62, fill=NA, color="black", linewidth=0.3) +
+    annotate("rect", xmin=0, xmax=6, ymin=30, ymax=50, fill=NA, color="black", linewidth=0.3) +
+    annotate("point", x=12, y=40, color="black", size=1) +
+    annotate("segment", x=0, xend=0, y=36, yend=44, color="black", linewidth=1.5) +
+    annotate("rect", xmin=102, xmax=120, ymin=18, ymax=62, fill=NA, color="black", linewidth=0.3) +
+    annotate("rect", xmin=114, xmax=120, ymin=30, ymax=50, fill=NA, color="black", linewidth=0.3) +
+    annotate("point", x=108, y=40, color="black", size=1) +
+    annotate("segment", x=120, xend=120, y=36, yend=44, color="black", linewidth=1.5) +
+    
+    coord_fixed(ratio = 1, xlim = c(-1, 121), ylim = c(-1, 81), expand = FALSE) +
+    theme_void() + 
+    theme(
+      plot.title = element_text(size = 32, face = "bold", hjust = 0.5, margin = margin(t=5, b = 5)),
+      plot.subtitle = element_text(size = 18, hjust = 0.5, color = "grey20", margin = margin(b = 10)),
+      legend.title = element_text(size = 14, face = "bold"),
+      legend.text = element_text(size = 12),
+      legend.key.height = unit(0.8, "cm"), 
+      plot.background = element_rect(fill = "white", color = NA),
+      plot.margin = margin(10, 10, 10, 10) 
+    ) +
+    labs(title = title_text, subtitle = subtitle_text)
+  
+  # 保存图片
+  ggsave(save_path, plot = p, width = 5, height = 4, units = "in", dpi = 300)
+  return(p)
+}
+```
+
+
+```{r}
+# 1. 提取单场比赛数据 (以拜仁慕尼黑数据集中的第一场比赛为例)
+target_match <- final_model_data %>% 
+  filter(team.name == "Bayern Munich") %>% 
+  pull(match_id) %>% unique() %>% .[1]
+
+single_match_data <- final_model_data %>%
+  filter(match_id == target_match, team.name == "Bayern Munich")
+
+# 2. 绘制单场 KDE 频率热图
+p_kde_single <- ggplot(single_match_data, aes(x = location.x, y = location.y)) +
+  stat_density_2d(aes(fill = ..level..), geom = "polygon", color = NA, linewidth = 0, bins = 15) +
+  scale_fill_viridis_c(option = "magma", name = "触球频率") +
+  
+  # 球场线辅助
+  annotate("rect", xmin=0, xmax=120, ymin=0, ymax=80, fill=NA, color="black", linewidth=0.3) +
+  annotate("segment", x=60, xend=60, y=0, yend=80, color="black", linewidth=0.3) +
+  annotate("point", x=60, y=40, color="black", size=1.5) +
+  annotate("rect", xmin=0, xmax=18, ymin=18, ymax=62, fill=NA, color="black", linewidth=0.3) +
+  annotate("rect", xmin=0, xmax=6, ymin=30, ymax=50, fill=NA, color="black", linewidth=0.3) +
+  annotate("point", x=12, y=40, color="black", size=1) +
+  annotate("segment", x=0, xend=0, y=36, yend=44, color="black", linewidth=1.5) +
+  annotate("rect", xmin=102, xmax=120, ymin=18, ymax=62, fill=NA, color="black", linewidth=0.3) +
+  annotate("rect", xmin=114, xmax=120, ymin=30, ymax=50, fill=NA, color="black", linewidth=0.3) +
+  annotate("point", x=108, y=40, color="black", size=1) +
+  annotate("segment", x=120, xend=120, y=36, yend=44, color="black", linewidth=1.5) +
+  
+  coord_fixed(ratio = 1, xlim = c(-1, 121), ylim = c(-1, 81), expand = FALSE) +
+  theme_void() + 
+  theme(
+    plot.title = element_text(size = 28, face = "bold", hjust = 0.5, margin = margin(t=5, b=5)),
+    plot.subtitle = element_text(size = 14, hjust = 0.5, color = "grey20", margin = margin(b=10)),
+    legend.position = "right"
+  ) +
+  labs(title = "拜仁单场 KDE 频率图", subtitle = "样本稀疏导致热区碎裂且陷入后场倒脚区")
+
+# 保存单场 KDE 图片
+ggsave("output_figures/图十二_单场_KDE对比图.png", plot = p_kde_single, width = 5, height = 4, dpi = 300)
+
+
+# 3. 绘制单场 克里金战术价值场
+# 将单场触球数据聚合到 1x1 网格中
+single_match_grid <- single_match_data %>%
+  mutate(grid_x = round(location.x), grid_y = round(location.y)) %>%
+  group_by(grid_x, grid_y) %>%
+  summarise(avg_z = mean(value_z, na.rm = TRUE), count = n(), .groups = "drop")
+
+# 转换为空间数据对象
+single_sp <- single_match_grid
+coordinates(single_sp) <- ~grid_x + grid_y
+
+# 【核心逻辑】：复用全赛季提取的变异函数结构 (v_model_fitted) 进行单场小样本插值预测
+single_krige <- krige(avg_z ~ 1, locations = single_sp, newdata = pred_grid, model = v_model_fitted, nmax = 50)
+single_df <- as.data.frame(single_krige)
+
+# 调整列名以适配画图函数
+colnames(single_df)[which(names(single_df) == "grid_x")] <- "x"
+colnames(single_df)[which(names(single_df) == "grid_y")] <- "y"
+
+# 调用你之前已经跑好的高颜值封装画图函数
+create_pitch_plot(single_df, 
+                  "拜仁单场战术价值场", 
+                  "依托全赛季先验变异函数，平滑还原单场致命威胁区", 
+                  "output_figures/图十三_单场_Kriging对比图.png")
+
+print("单场双图对比已成功生成并保存！")
+```
+
 
 
 
