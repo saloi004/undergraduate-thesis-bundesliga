@@ -9,11 +9,10 @@ execute:
 # 零、 全局环境与配置初始化
 
 ```{r,eval=FALSE}
-# 1. 创建必备文件夹结构 (防止保存时报错)
 dir.create("data", showWarnings = FALSE)
 dir.create("output_figures", showWarnings = FALSE)
 
-# 2. 加载核心包
+# 包加载
 library(StatsBombR)
 library(tidyverse)
 library(ggplot2)
@@ -21,10 +20,10 @@ library(gstat)
 library(sp)
 library(showtext)
 
-# 开启字体渲染支持
+# 字体渲染
 showtext_auto()
 
-# 3. 核心颜色卡与断点设定 (全局生效)
+# 颜色卡与断点设定 (全局生效)
 my_breaks <- c(-Inf, 0, 2, 4, 6, 8, 10, 12, 15, Inf)
 my_colors <- c(
   "midnightblue",  # < 0 分 (失误区域)
@@ -38,11 +37,11 @@ my_colors <- c(
   "darkred"        # > 15 分 (绝对得分机会/角球)
 )
 
-# 拜仁差异图专属色卡 (红优蓝劣)
+# 差异图色卡 (红优蓝劣)
 diff_breaks <- c(-Inf, -3, -1, 0, 1, 3, Inf)
 diff_colors <- c("darkblue", "blue", "lightblue", "lightcoral", "red", "darkred")
 
-# 4. 封装全局高颜值足球场绘制函数 (自带防黑底修复)
+# 4. 封装全局足球场绘制函数
 create_pitch_plot <- function(kriging_df, title_text, subtitle_text, save_path) {
   p <- ggplot(kriging_df, aes(x = x, y = y, z = var1.pred)) +
     geom_contour_filled(breaks = my_breaks) +
@@ -82,7 +81,7 @@ create_pitch_plot <- function(kriging_df, title_text, subtitle_text, save_path) 
 
 # 一、数据获取与清洗预处理
 ```{r,eval=FALSE}
-# 1. 抓取全赛季数据 (如果本地没有数据则自动抓取，已有则直接读取)
+# 抓取全赛季数据 (如果本地没有数据则自动抓取，已有则直接读取)
 if(!file.exists("data/Bundesliga_1516_AllEvents.rds")) {
   print("本地未发现数据，正在从 StatsBomb API 抓取德甲 15/16 数据...")
   comp <- FreeCompetitions() %>% filter(competition_name == "1. Bundesliga", season_name == "2015/2016")
@@ -101,7 +100,7 @@ if(!file.exists("data/Bundesliga_1516_AllEvents.rds")) {
   all_1516_events <- readRDS("data/Bundesliga_1516_AllEvents.rds")
 }
 
-# 2. 扁平化清洗流
+# 扁平化清洗流
 full_season_cleaned <- all_1516_events %>%
   allclean() %>% 
   filter(!type.name %in% c("Starting XI", "Half Start", "Half End")) %>%
@@ -120,8 +119,9 @@ print(paste("清洗完毕，总行数:", nrow(full_season_cleaned)))
 
 
 # 二、探索性数据分析 (EDA) - 为 Z 模型参数找依据
+## 1. 射门密度图
+
 ```{r,eval=FALSE}
-# 1. 射门密度图
 shots_data <- full_season_cleaned %>% filter(type.name == "Shot")
 p_shot <- ggplot(shots_data, aes(x = location.x, y = location.y)) +
   annotate("rect", xmin = -1, xmax = 121, ymin = -1, ymax = 81, fill = "white") +
@@ -140,8 +140,10 @@ p_shot <- ggplot(shots_data, aes(x = location.x, y = location.y)) +
         panel.background = element_rect(fill = "white", color = NA)) +
   labs(title = "德甲 15/16 赛季射门密度", subtitle = "高密度区集中于禁区中路")
 ggsave("output_figures/EDA_射门密度分布.png", plot = p_shot, width = 5, height = 4, dpi = 300, bg="white")
+```
 
-# 2. 压力失误率对比
+## 2. 压力失误率对比
+```{r,eval=FALSE}
 pressure_stats <- full_season_cleaned %>%
   mutate(is_error = ifelse(type.name %in% c("Miscontrol", "Dispossessed"), 1, 0)) %>%
   group_by(under_pressure) %>%
@@ -154,8 +156,10 @@ p_pressure <- ggplot(pressure_stats, aes(x = under_pressure, y = error_rate, fil
   theme(plot.title = element_text(size = 28, face = "bold", hjust = 0.5), legend.position = "none", plot.background = element_rect(fill = "white", color=NA)) +
   labs(title = "不同防守压力下的失误率对比", x="", y="")
 ggsave("output_figures/EDA_不同压力失误率对比.png", plot = p_pressure, width = 5, height = 3.8, dpi = 300, bg="white")
+```
 
-# 3. 定位球传球类型助攻率对比
+## 3. 定位球传球类型助攻率对比
+```{r,eval=FALSE}
 assist_stats <- full_season_cleaned %>% filter(type.name == "Pass") %>%
   mutate(pass_type = case_when(pass.type.name == "Corner" ~ "角球", pass.type.name == "Free Kick" ~ "任意球", TRUE ~ "运动战")) %>%
   group_by(pass_type) %>% summarise(total_passes = n(), shot_assists = sum(pass.shot_assist == TRUE, na.rm = TRUE), assist_rate = shot_assists / total_passes) %>%
@@ -166,8 +170,10 @@ p_assist <- ggplot(assist_stats, aes(x = reorder(pass_type, -assist_rate), y = a
   theme_minimal(base_size = 20) + theme(plot.title = element_text(size = 28, face = "bold", hjust = 0.5), legend.position = "none", plot.background = element_rect(fill = "white", color=NA)) +
   labs(title = "不同传球类型的射门助攻率", x="", y="")
 ggsave("output_figures/EDA_传球类型助攻率对比.png", plot = p_assist, width = 5, height = 3.8, dpi = 300, bg="white")
+```
 
-# 4. 传球高度失误率对比
+## 4. 传球高度失误率对比
+```{r,eval=FALSE}
 pass_height_stats <- full_season_cleaned %>% filter(type.name == "Pass", !is.na(pass.height.name)) %>%
   mutate(is_error = ifelse(!is.na(pass.outcome.name), 1, 0)) %>% group_by(pass.height.name) %>%
   summarise(total_passes = n(), error_count = sum(is_error), error_rate = error_count / total_passes) %>%
@@ -182,7 +188,7 @@ ggsave("output_figures/EDA_传球高度失误率对比.png", plot = p_height, wi
 
 # 三、战术价值 Z 模型的计算与网格化聚合
 ```{r,eval=FALSE}
-# 1. 计算合成最终价值 Z
+# 计算合成最终价值 Z
 def_types <- c("Goal Keeper", "Clearance", "Block", "Interception", "Ball Recovery", "Pressure", "Duel", "Shield", "Foul Committed")
 error_types <- c("Miscontrol", "Dispossessed", "Dribbled Past", "Own Goal Against")
 
@@ -223,13 +229,12 @@ final_model_data <- full_season_cleaned %>%
     value_z = s_base * w_space * c_pressure * q_height
   ) %>% filter(!is.na(value_z))
 
-# 2. 空间网格聚合 (1x1米)
+# 空间网格聚合 (1x1米)
 grid_data <- final_model_data %>%
   mutate(grid_x = round(location.x), grid_y = round(location.y)) %>%
   group_by(grid_x, grid_y) %>%
   summarise(avg_z = mean(value_z, na.rm = TRUE), count = n(), .groups = "drop")
 
-print(paste("聚合完成，有效预测网格点数:", nrow(grid_data)))
 ```
 
 
