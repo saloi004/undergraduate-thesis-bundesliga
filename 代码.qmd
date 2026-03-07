@@ -459,8 +459,8 @@ process_player_kriging <- function(player_string, cn_name, position_desc) {
 
 ```{r,eval=FALSE}
 # 批量执行出图并捕获过滤后的数据用于计算度量
-mkhi_df <- process_player_kriging("Henrikh Mkhitaryan", "姆希塔良", "还原前场核心真实的进攻走廊覆盖")
-auba_df <- process_player_kriging("Pierre-Emerick Aubameyang", "奥巴梅扬", "极致收敛于禁区核心的纯粹终结者")
+mkhi_df <- process_player_kriging("Henrikh Mkhitaryan", "姆希塔良", "还原前场真实的进攻走廊覆盖")
+auba_df <- process_player_kriging("Pierre-Emerick Aubameyang", "奥巴梅扬", "收敛于禁区核心的终结者")
 weigl_df <- process_player_kriging("Julian Weigl", "魏格尔", "拖后组织核心精准覆盖中场过渡带")
 hummels_df <- process_player_kriging("Mats Hummels", "胡梅尔斯", "防线统帅纵贯本方半场的出球热区")
 
