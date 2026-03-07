@@ -476,9 +476,9 @@ $$
 
 ::: {#fig-ok-vs-uk layout-ncol=2}
 
-![普通克里金 (OK) 基准场](output_figures/图一_德甲球权价值基准场.png){#fig-ok}
+![普通克里金 (OK) 基准场](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/%E5%9B%BE%E4%B8%80_%E5%BE%B7%E7%94%B2%E7%90%83%E6%9D%83%E4%BB%B7%E5%80%BC%E5%9F%BA%E5%87%86%E5%9C%BA.png?raw=true){#fig-ok}
 
-![泛克里金 (UK) 基准场](output_figures/泛克里金UK_全联盟基准场.png){#fig-uk}
+![泛克里金 (UK) 基准场](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/%E6%B3%9B%E5%85%8B%E9%87%8C%E9%87%91UK_%E5%85%A8%E8%81%94%E7%9B%9F%E5%9F%BA%E5%87%86%E5%9C%BA.png?raw=true){#fig-uk}
 
 图 3-4 普通克里金与泛克里金生成的德甲全联盟价值场视觉对比
 :::
