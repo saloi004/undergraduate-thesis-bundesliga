@@ -563,19 +563,14 @@ write.csv(sensitivity_results, "output_figures/Model_多维参数敏感性结果
 ```{r,eval=FALSE}
 p_multi_sensitivity <- ggplot(sensitivity_results, aes(x = Perturbation_Label, y = Mean_Z, group = Parameter_CN, color = Parameter_CN)) +
   geom_line(linewidth = 1.2) +
-  geom_point(size = 4) + # 稍微放大了点，配合大字体
+  geom_point(size = 4) + 
   scale_color_viridis_d(option = "turbo", name = "测试参数 (其余保持基准)") +
-  # 基础字号调大到 20，对齐你之前的 EDA 图表
   theme_minimal(base_size = 20) + 
   theme(
-    # 主标题放大到 28，加粗
     plot.title = element_text(size = 28, face = "bold", hjust = 0.5, margin = margin(t=10, b=10)),
-    # 副标题放大到 18
     plot.subtitle = element_text(size = 18, hjust = 0.5, color = "grey30", margin = margin(b=15)),
-    # 坐标轴标题放大
     axis.title.x = element_text(size = 18, margin = margin(t=10)),
     axis.title.y = element_text(size = 18, margin = margin(r=10)),
-    # 图例字体调大
     legend.position = "bottom",
     legend.title = element_text(size = 16, face = "bold"),
     legend.text = element_text(size = 14),
