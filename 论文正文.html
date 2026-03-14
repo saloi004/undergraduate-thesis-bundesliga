@@ -117,7 +117,8 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#模型特征选择的理论与数据依据" id="toc-模型特征选择的理论与数据依据" class="nav-link" data-scroll-target="#模型特征选择的理论与数据依据">3.3.1 模型特征选择的理论与数据依据</a></li>
   <li><a href="#z-模型的多维特征乘法构建" id="toc-z-模型的多维特征乘法构建" class="nav-link" data-scroll-target="#z-模型的多维特征乘法构建">3.3.2 Z 模型的多维特征乘法构建</a></li>
-  <li><a href="#模型算法的程序实现" id="toc-模型算法的程序实现" class="nav-link" data-scroll-target="#模型算法的程序实现">3.3.3 模型算法的程序实现</a></li>
+  <li><a href="#模型参数设定与稳健性检验" id="toc-模型参数设定与稳健性检验" class="nav-link" data-scroll-target="#模型参数设定与稳健性检验">3.3.3 模型参数设定与稳健性检验</a></li>
+  <li><a href="#模型算法的程序实现" id="toc-模型算法的程序实现" class="nav-link" data-scroll-target="#模型算法的程序实现">3.3.4 模型算法的程序实现</a></li>
   </ul></li>
   <li><a href="#空间变异特性的提取与参数拟合" id="toc-空间变异特性的提取与参数拟合" class="nav-link" data-scroll-target="#空间变异特性的提取与参数拟合">3.4 空间变异特性的提取与参数拟合</a>
   <ul class="collapse">
@@ -138,6 +139,7 @@ window.Quarto = {
   <li><a href="#微观极限视角单场稀疏样本下的鲁棒性检验" id="toc-微观极限视角单场稀疏样本下的鲁棒性检验" class="nav-link" data-scroll-target="#微观极限视角单场稀疏样本下的鲁棒性检验">3.7.2 微观极限视角：单场稀疏样本下的鲁棒性检验</a></li>
   </ul></li>
   </ul></li>
+  <li><a href="#参考文献" id="toc-参考文献" class="nav-link" data-scroll-target="#参考文献">参考文献</a></li>
   </ul>
 </nav>
 </div>
@@ -249,7 +251,7 @@ window.Quarto = {
 <section id="数据采集与空间坐标系的重构" class="level2">
 <h2 class="anchored" data-anchor-id="数据采集与空间坐标系的重构">2.2 数据采集与空间坐标系的重构</h2>
 <p>在数据获取阶段，由于全赛季数据量庞大且 StatsBomb API 存在访问频次限制，本研究构建了自动化的批量抓取与异常处理机制。通过 <code>for</code> 循环遍历全赛季所有场次的基础元数据，并嵌套 <code>tryCatch</code> 异常捕获函数，有效避免了因单场数据缺失或网络波动导致的抓取中断 。为提升运算效率并保障数据完整性，原始事件流被合并后序列化存储为 <code>.rds</code> 格式，大幅降低了内存读取负担与重复请求的时间成本 。</p>
-<p>原始的 StatsBomb 事件流数据采用 JSON 格式进行多层级嵌套存储。在此结构下，一个单一的战术事件不仅包含基础时间与实体属性，还深度嵌套了触球点的空间位置数组。这种高度非结构化的数据形态无法直接输入至克里金空间地统计模型中。为此，本研究在预处理的初始阶段调用了 <code>allclean()</code> 函数对原始数据框进行了“扁平化”重塑 。 该操作成功将嵌套的地理位置信息剥离，转化为独立的 <code>location.x</code>（纵向推进坐标）和 <code>location.y</code>（横向位置坐标）字段 。StatsBomb 官方采用 <span class="math inline">\(120 \times 80\)</span> 的标准化二维坐标系，该坐标系在物理尺度上以“码（Yard）”为基准映射单元（<span class="math inline">\(1\)</span> 单位坐标 <span class="math inline">\(\approx 0.914\)</span> 米）。为最大程度保障原始追踪数据的空间拓扑纯度，避免在强行公制换算中引入浮点数计算误差，本研究在后续的空间相关性建模与克里金插值过程中，全流程未进行比例换算，而是严格沿用该“标准坐标单位（Standard Coordinate Unit）”作为距离量纲。 后文涉及的所有空间距离参数（如变异函数中的滞后步长、变程等）均在此坐标体系下进行学术解释。</p>
+<p>原始的 StatsBomb 事件流数据采用 JSON 格式进行多层级嵌套存储。在此结构下，一个单一的战术事件不仅包含基础时间与实体属性，还深度嵌套了触球点的空间位置数组。这种高度非结构化的数据形态无法直接输入至克里金空间地统计模型中。为此，本研究在预处理的初始阶段调用了 <code>allclean()</code> 函数对原始数据框进行了“扁平化”重塑 。 该操作成功将嵌套的地理位置信息剥离，转化为独立的 <code>location.x</code>（纵向推进坐标）和 <code>location.y</code>（横向位置坐标）字段 。StatsBomb 官方采用 <span class="math inline">\(120 \times 80\)</span> 的标准化二维坐标系，该坐标系在物理尺度上以“码（Yard）”为基准映射单元（<span class="math inline">\(1\)</span> 单位坐标 <span class="math inline">\(\approx 0.914\)</span> 米）。为最大程度保障原始追踪数据的空间拓扑纯度，避免在强行公制换算中引入浮点数计算误差，本研究在后续的空间相关性建模与克里金插值过程中，全流程未进行比例换算，而是严格沿用该“标准坐标单位（Standard Coordinate Unit）”作为距离量纲。后文涉及的所有空间距离参数（如变异函数中的滞后步长、变程等）均在此坐标体系下进行学术解释。</p>
 </section>
 <section id="数据清洗与降噪机制" class="level2">
 <h2 class="anchored" data-anchor-id="数据清洗与降噪机制">2.3 数据清洗与降噪机制</h2>
@@ -615,8 +617,29 @@ window.Quarto = {
 <p><span class="math display">\[Q_{quality} = \begin{cases} 0.8, &amp; \text{if High Pass (高空球)} \\ 0.9, &amp; \text{if Low Pass (半高球)} \\ 1.0, &amp; \text{if Ground Pass (地面球) or Non-Pass Actions} \end{cases}\]</span></p>
 </section>
 </section>
+<section id="模型参数设定与稳健性检验" class="level3">
+<h3 class="anchored" data-anchor-id="模型参数设定与稳健性检验">3.3.3 模型参数设定与稳健性检验</h3>
+<section id="核心主观参数的设定逻辑" class="level4">
+<h4 class="anchored" data-anchor-id="核心主观参数的设定逻辑">1. 核心主观参数的设定逻辑</h4>
+<p>在本研究的战术价值 <span class="math inline">\(Z\)</span> 模型中，最终的估值由四个核心维度综合决定：基础战术分 (<span class="math inline">\(s_{base}\)</span>)、空间权重 (<span class="math inline">\(w_{space}\)</span>)、压力奖励系数 (<span class="math inline">\(c_{pressure}\)</span>) 以及传球高度惩罚 (<span class="math inline">\(q_{height}\)</span>)。由于足球比赛的复杂性与动态性，部分参数的初始权重需要结合赛事特征与领域先验知识进行设定：全局参数 (<span class="math inline">\(s_{base}\)</span> 与 <span class="math inline">\(w_{space}\)</span>)： 这两项参数构成了模型的基本底座。基础分依据事件类型（如射门、关键传球、失误）进行阶梯式赋分；空间权重则依据坐标位置和球场中心度进行计算，距离对方球门越近、越靠近中路，权重越高。情境触发参数 (<span class="math inline">\(c_{pressure}\)</span> 与 <span class="math inline">\(q_{height}\)</span>)： 这两项参数旨在还原真实的比赛高难度情境。对于在防守压迫下完成的动作，模型赋予 1.5倍 的压力奖励系数 (<span class="math inline">\(c_{pressure}\)</span>) 以表彰其更高的技术执行难度；对于传球高度，考虑到高空球和半高球的落点控制难度与丢失球权风险，模型分别施加了 0.8 与 0.9 的衰减系数 (<span class="math inline">\(q_{height}\)</span>)。</p>
+</section>
+<section id="多维参数敏感性分析-oat" class="level4">
+<h4 class="anchored" data-anchor-id="多维参数敏感性分析-oat">2. 多维参数敏感性分析 (OAT)</h4>
+<p>为了排查上述主观参数设定对模型整体估值体系可能产生的过度干扰，本研究引入了单因素敏感性分析（One-At-a-Time Sensitivity Analysis）。以基准模型为参照，依次将上述四个维度的参数分别上调和下调 10% 与 20%（其余参数保持基准值不变），并观察全联盟平均战术价值的变化幅度。结合敏感性分析结果表与折线图，可以得出以下稳健性结论：第一，情境触发参数未导致宏观估值失真。结果表明，模型对压力奖励系数 (<span class="math inline">\(c_{pressure}\)</span>) 和传球高度惩罚 (<span class="math inline">\(q_{height}\)</span>) 的主观扰动极不敏感。当这两项参数发生 ±20% 的大幅度变动时，全联盟的平均战术价值始终稳定在 2.43 至 2.48 的极窄区间内。这证明了针对特定比赛情境（受压迫、高空作业）所引入的局部权重调整，既能精准捕捉微观战术细节，又不会“绑架”整个大盘，避免了宏观估值体系的失真。第二，全局参数表现出预期的线性缩放特征。当基础战术分 (<span class="math inline">\(s_{base}\)</span>) 和空间权重 (<span class="math inline">\(w_{space}\)</span>) 发生浮动时，大盘均值呈现出严格的线性缩放（均值从下调 20% 时的 1.97 稳步上升至上调 20% 时的 2.95）。这种同步的等比例缩放符合数学公式的设计预期。它表明，全局变量的改变仅仅是拉伸或压缩了战术价值的“刻度尺”，而并未破坏模型内部对不同球员和不同区域价值排序的相对关系，其核心标准差（SD）也随之保持等比例放缩（从 3.27 升至 4.91）。</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Model_%E5%A4%9A%E7%BB%B4%E5%8F%82%E6%95%B0%E6%95%8F%E6%84%9F%E6%80%A7%E6%8A%98%E7%BA%BF%E5%9B%BE.png?raw=true" class="img-fluid figure-img"></p>
+<figcaption>主观参数敏感性分析</figcaption>
+</figure>
+</div>
+</section>
+<section id="结论" class="level4">
+<h4 class="anchored" data-anchor-id="结论">结论：</h4>
+<p>综合上述分析，本研究所构建的战术估值模型对任何单一的主观初始设定均不具有过度依赖性。局部参数调整具备高容错率，全局参数变动符合数学逻辑。模型底层框架具有极强的稳健性，其推导出的实证结论真实可靠。</p>
+</section>
+</section>
 <section id="模型算法的程序实现" class="level3">
-<h3 class="anchored" data-anchor-id="模型算法的程序实现">3.3.3 模型算法的程序实现</h3>
+<h3 class="anchored" data-anchor-id="模型算法的程序实现">3.3.4 模型算法的程序实现</h3>
 <p>基于上述数学设定，本研究的数据预处理、特征赋权以及克里金空间插值建模均依托 R 语言核心生态（如 <code>tidyverse</code>, <code>gstat</code>, <code>sp</code> 宏包）实现。为保证研究的可重复性，本模型的核心算法与数据清洗流程代码已完整收录于论文附。经下文5 折交叉验证确认，选定的普通克里金法已具备良好的预测精度与平稳性。之后将正式依托该模型，对德甲赛场的宏观战术分布与球队表现展开实证测度。</p>
 </section>
 </section>
@@ -647,7 +670,7 @@ window.Quarto = {
 <p>该图在统计学层面为普通克里金插值提供了核心参数化依据，展示了以下关键战术特征：</p>
 <ol type="1">
 <li><strong>空间自相关的显性存在</strong>：实验变异散点随滞后距离 <span class="math inline">\(h\)</span> 呈现连续上升趋势，证明德甲赛场的战术价值分布并非随机孤立，而是存在显著的正向空间自相关。这构成了引入地统计学模型的核心合法性前提。</li>
-<li><strong>战术辐射半径的量化（变程 Range）</strong>：变异曲线在距离 <span class="math inline">\(h \approx 57m\)</span> 处逐渐趋于基台值（Sill <span class="math inline">\(\approx 6.0\)</span>）。该“变程”精确度量了球员持球动作的“极限空间辐射半径”。这意味着在约 57 米的范围内，战术事件之间存在极强的连带效应。</li>
+<li><strong>战术辐射半径的量化（变程 Range）</strong>：变异曲线在距离 <span class="math inline">\(h \approx 57\)</span> 个坐标单位处逐渐趋于基台值（Sill <span class="math inline">\(\approx 6.0\)</span>）。该“变程”精确度量了球员持球动作的“极限空间辐射半径”。这意味着在约 57 个标准单位（跨越近半个球场）的范围内，战术事件之间存在极强的连带效应。</li>
 <li><strong>微观随机性的剥离（块金值 Nugget）</strong>：拟合曲线在 Y 轴的截距并未归零（Nugget <span class="math inline">\(\approx 0.8\)</span>），这一微小的块金效应客观量化了足球比赛中因皮球不规则反弹等带来的微观随机噪音，保障了预测的稳健性。</li>
 </ol>
 <section id="理论变异函数数学模型的参数标定" class="level4">
@@ -706,13 +729,13 @@ C_0 + C \left( 1 - \exp\left(-\frac{h}{a}\right) \right), &amp; h &gt; 0
 <tr class="even">
 <td style="text-align: left;"><strong>变程参数</strong></td>
 <td style="text-align: center;"><span class="math inline">\(a\)</span></td>
-<td style="text-align: center;"><strong>19.07</strong> 码</td>
+<td style="text-align: center;"><strong>19.07</strong> 坐标单位</td>
 <td style="text-align: left;">指数衰减的核心速率控制参数。</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"><strong>有效变程</strong></td>
 <td style="text-align: center;"><span class="math inline">\(\approx 3a\)</span></td>
-<td style="text-align: center;"><strong>57.2</strong> 码</td>
+<td style="text-align: center;"><strong>57.2</strong> 坐标单位</td>
 <td style="text-align: left;">标定了单个战术动作在球场上的最大有效辐射半径。</td>
 </tr>
 </tbody>
@@ -912,6 +935,10 @@ C_0 + C \left( 1 - \exp\left(-\frac{h}{a}\right) \right), &amp; h &gt; 0
 </ol>
 </section>
 </section>
+</section>
+<section id="参考文献" class="level1">
+<h1>参考文献</h1>
+<p>[1] Pappalardo, L., Cintia, P., Rossi, A., Massucco, E., Ferragina, P., Pedreschi, D., &amp; Giannotti, F. (2019). A public data set of spatio-temporal match events in soccer competitions. Scientific data, 6(1), 236. [2] Cervone, D., Bornn, L., &amp; Goldsberry, K. (2016, March). NBA court realty. In 10th MIT sloan sports analytics conference. [3] Fernandez, J., &amp; Bornn, L. (2018, February). Wide Open Spaces: A statistical technique for measuring space creation in professional soccer. In Sloan sports analytics conference (Vol. 2018). [4] Buldú, J. M., Busquets, J., Martínez, J. H., Herrera-Diestra, J. L., Echegoyen, I., Galeano, J., &amp; Luque, J. (2018). Using Network Science to Analyse Football Passing Networks: Dynamics, Space, Time, and the Multilayer Nature of the Game. Frontiers in psychology, 9, 1900. [5] Schultze, S., &amp; Wellbrock, C. M. (2015). ‘B-FASST’: A Statistical and Spatial Analysis System to Evaluate Player Performance in Soccer. Available at SSRN 2643041. [6] Buldú, J. M., Busquets, J., Martínez, J. H., Herrera-Diestra, J. L., Echegoyen, I., Galeano, J., &amp; Luque, J. (2018). Using network science to analyse football passing networks: Dynamics, space, time, and the multilayer nature of the game. Frontiers in psychology, 9, 1900. [7] Kim, H. C., Kwon, O., &amp; Li, K. J. (2011, November). Spatial and spatiotemporal analysis of soccer. In Proceedings of the 19th ACM SIGSPATIAL international conference on advances in geographic information systems (pp.&nbsp;385-388). [8] Link, D., Lang, S., &amp; Seidenschwarz, P. (2016). Real time quantification of dangerousity in football using spatiotemporal tracking data. PloS one, 11(12), e0168768. [9] Fernández, J., &amp; Bornn, L. (2020, September). Soccermap: A deep learning architecture for visually-interpretable analysis in soccer. In Joint European Conference on Machine Learning and Knowledge Discovery in Databases (pp.&nbsp;491-506). Cham: Springer International Publishing. [10] Garrido, D., Burriel, B., Resta, R., del Campo, R. L., &amp; Buldú, J. M. (2022). Heatmaps in soccer: Event vs tracking datasets. Chaos, Solitons &amp; Fractals, 165, 112827. [11] Liu, N. (2022). GeoVisualisation of Football Players Movement. Olomouc. diplomová práce (Mgr.). Univerzita Palackého v Olomouci. Přírodovědecká fakulta. [12] Kotzbek, G., &amp; Kainz, W. (2015, August). Gis-based football game analysis–a brief introduction to the applied data base and a guideline on how to utilise it. In Proceedings of the 27th International Cartographic Conference (pp.&nbsp;1-10). [13] Memmert, D., Lemmink, K. A., &amp; Sampaio, J. (2017). Current approaches to tactical performance analyses in soccer using position data. Sports medicine, 47(1), 1-10. [14] Thakali, L., Kwon, T. J., &amp; Fu, L. (2015). Identification of crash hotspots using kernel density estimation and kriging methods: a comparison. Journal of Modern Transportation, 23(2), 93-106. [15] Wand, M. P., &amp; Jones, M. C. (1994). Kernel smoothing. CRC press. [16] Rudd, S. (2011, September). A framework for tactical analysis and individual offensive production assessment in soccer using Markov chains. In New England symposium on statistics in sports (pp.&nbsp;36-55). [17]Singh, K. (2018, February 15). Introducing expected threat (xT). Karun.in. https://karun.in/blog/expected-threat.html [18]Heiner, M., Fellingham, G. W., &amp; Thomas, C. (2014). Skill importance in women’s soccer. Journal of Quantitative Analysis in Sports, 10(2), 287-302.</p>
 </section>
 
 </main>
