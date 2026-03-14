@@ -81,7 +81,7 @@ create_pitch_plot <- function(kriging_df, title_text, subtitle_text, save_path) 
 
 # 一、数据获取与清洗预处理
 ```{r,eval=FALSE}
-# 抓取全赛季数据 (如果本地没有数据则自动抓取，已有则直接读取)
+# 抓取全赛季数据
 if(!file.exists("data/Bundesliga_1516_AllEvents.rds")) {
   print("本地未发现数据，正在从 StatsBomb API 抓取德甲 15/16 数据...")
   comp <- FreeCompetitions() %>% filter(competition_name == "1. Bundesliga", season_name == "2015/2016")
@@ -238,7 +238,7 @@ grid_data <- final_model_data %>%
 ```
 
 
-# 四、变异函数拟合与模型交叉验证 (LOOCV)
+# 四、变异函数拟合与模型五折交叉验证
 ```{r,eval=FALSE}
 # 拟合实验与理论变异函数 (OK)
 train_sp <- grid_data
@@ -258,7 +258,7 @@ coordinates(pred_grid) <- ~x + y
 gridded(pred_grid) <- TRUE
 
 # 5折交叉验证评估与残差直方图
-print("正在执行 5 折留一交叉验证 (LOOCV)...")
+print("正在执行 5折交叉验证...")
 cv_results <- krige.cv(avg_z ~ 1, train_sp, model = v_model_fitted, nfold = 5, nmax = 50)
 
 cv_df <- data.frame(Observed = cv_results$observed, Predicted = cv_results$var1.pred, Residuals = cv_results$residual)
@@ -348,7 +348,7 @@ p_diff <- ggplot(diff_df, aes(x = x, y = y, z = diff_z)) +
 ggsave("output_figures/Macro_拜仁_差异图.png", plot = p_diff, width = 5, height = 4, dpi = 300, bg="white")
 ```
 
-## 1.泛克里金 (UK) 与普通克里金OK基准模型对比
+## 2.泛克里金 (UK) 与普通克里金OK基准模型对比
 ```{r,eval=FALSE}
 pred_grid_uk <- expand.grid(grid_x = 1:120, grid_y = 1:80)
 coordinates(pred_grid_uk) <- ~grid_x + grid_y
@@ -486,4 +486,102 @@ metrics_table <- bind_rows(
 ) %>% mutate(Centroid_X = round(Centroid_X, 1), Centroid_Y = round(Centroid_Y, 1), Zone14_Value = round(Zone14_Value, 0))
 
 write.csv(metrics_table, "output_figures/Player_核心球员空间量化对比表.csv", row.names = FALSE)
+```
+
+# 八、稳健性检验：多维主观参数的敏感性分析
+```{r,eval=FALSE}
+# 扰动比例
+perturbations <- c(-0.20, -0.10, 0, 0.10, 0.20)
+parameters_to_test <- c("s_base", "w_space", "c_pressure", "q_height")
+
+# 标签
+param_labels <- c(
+  "s_base" = "基础战术分 (s_base)",
+  "w_space" = "空间权重 (w_space)",
+  "c_pressure" = "压力奖励系数 (c_pressure)",
+  "q_height" = "传球高度惩罚 (q_height)"
+)
+
+# 创建一个空的列表来存储每次循环的结果
+sensitivity_list <- list()
+print("开始执行多维度参数敏感性分析...")
+```
+
+
+```{r,eval=FALSE}
+for (param in parameters_to_test) {
+  for (p in perturbations) {
+    
+    # 重新计算 Z 值，精准施加扰动
+    temp_data <- final_model_data %>%
+      mutate(
+        # 1. 如果当前测的是 s_base，所有基础分浮动
+        adj_s_base = ifelse(param == "s_base", s_base * (1 + p), s_base),
+        
+        # 2. 如果测的是 w_space，空间权重浮动
+        adj_w_space = ifelse(param == "w_space", w_space * (1 + p), w_space),
+        
+        # 3. 如果测的是 c_pressure，仅对受压迫时设定的 1.5 施加扰动，常规 1.0 不变
+        adj_c_pressure = case_when(
+          param == "c_pressure" & under_pressure == TRUE ~ 1.5 * (1 + p),
+          TRUE ~ c_pressure 
+        ),
+        
+        # 4. 如果测的是 q_height，仅对主观设定的高空球(0.8)和低平球(0.9)施加扰动
+        adj_q_height = case_when(
+          param == "q_height" & type.name == "Pass" & pass.height.name == "High Pass" ~ 0.8 * (1 + p),
+          param == "q_height" & type.name == "Pass" & pass.height.name == "Low Pass" ~ 0.9 * (1 + p),
+          TRUE ~ q_height
+        ),
+        
+        # 重新合成最终的 Z 值
+        adjusted_value_z = adj_s_base * adj_w_space * adj_c_pressure * adj_q_height
+      )
+    
+    # 提取评估指标存入列表
+    sensitivity_list[[paste(param, p, sep="_")]] <- data.frame(
+      Parameter = param,
+      Parameter_CN = param_labels[param],
+      Perturbation = p,
+      Perturbation_Label = factor(paste0(p * 100, "%"), levels = c("-20%", "-10%", "0%", "10%", "20%")),
+      Mean_Z = mean(temp_data$adjusted_value_z, na.rm = TRUE),
+      SD_Z = sd(temp_data$adjusted_value_z, na.rm = TRUE)
+    )
+  }
+}
+```
+
+## 结果
+```{r,eval=FALSE}
+sensitivity_results <- bind_rows(sensitivity_list)
+print("多维敏感性分析结果表：")
+print(sensitivity_results)
+write.csv(sensitivity_results, "output_figures/Model_多维参数敏感性结果表.csv", row.names = FALSE)
+```
+
+## 可视化
+```{r,eval=FALSE}
+p_multi_sensitivity <- ggplot(sensitivity_results, aes(x = Perturbation_Label, y = Mean_Z, group = Parameter_CN, color = Parameter_CN)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 3) +
+  scale_color_viridis_d(option = "turbo", name = "测试参数 (其余参数保持基准)") +
+  theme_minimal(base_size = 15) +
+  theme(
+    plot.title = element_text(size = 22, face = "bold", hjust = 0.5, margin = margin(b=10)),
+    plot.subtitle = element_text(size = 14, hjust = 0.5, color = "grey30", margin = margin(b=15)),
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold"),
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.background = element_rect(fill = "white", color = NA),
+    panel.grid.minor = element_blank()
+  ) +
+  labs(
+    title = "Z模型多维主观参数敏感性分析 (OAT)",
+    subtitle = "各参数独立扰动 ±20% 时，全联盟平均战术价值的波动幅度",
+    x = "主观参数设定扰动比例",
+    y = "全联盟平均战术价值 (Mean Z)"
+  )
+
+# 保存高逼格的多线图
+ggsave("output_figures/Model_多维参数敏感性折线图.png", plot = p_multi_sensitivity, width = 7, height = 5.5, dpi = 300, bg="white")
 ```

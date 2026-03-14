@@ -111,7 +111,7 @@ editor: visual
 
 在数据获取阶段，由于全赛季数据量庞大且 StatsBomb API 存在访问频次限制，本研究构建了自动化的批量抓取与异常处理机制。通过 `for` 循环遍历全赛季所有场次的基础元数据，并嵌套 `tryCatch` 异常捕获函数，有效避免了因单场数据缺失或网络波动导致的抓取中断 。为提升运算效率并保障数据完整性，原始事件流被合并后序列化存储为 `.rds` 格式，大幅降低了内存读取负担与重复请求的时间成本 。
 
-原始的 StatsBomb 事件流数据采用 JSON 格式进行多层级嵌套存储。在此结构下，一个单一的战术事件不仅包含基础时间与实体属性，还深度嵌套了触球点的空间位置数组。这种高度非结构化的数据形态无法直接输入至克里金空间地统计模型中。为此，本研究在预处理的初始阶段调用了 `allclean()` 函数对原始数据框进行了“扁平化”重塑 。 该操作成功将嵌套的地理位置信息剥离，转化为独立的 `location.x`（纵向推进坐标）和 `location.y`（横向位置坐标）字段 。StatsBomb 官方采用 $120 \times 80$ 的标准化二维坐标系，该坐标系在物理尺度上以“码（Yard）”为基准映射单元（$1$ 单位坐标 $\approx 0.914$ 米）。为最大程度保障原始追踪数据的空间拓扑纯度，避免在强行公制换算中引入浮点数计算误差，本研究在后续的空间相关性建模与克里金插值过程中，全流程未进行比例换算，而是严格沿用该“标准坐标单位（Standard Coordinate Unit）”作为距离量纲。 后文涉及的所有空间距离参数（如变异函数中的滞后步长、变程等）均在此坐标体系下进行学术解释。
+原始的 StatsBomb 事件流数据采用 JSON 格式进行多层级嵌套存储。在此结构下，一个单一的战术事件不仅包含基础时间与实体属性，还深度嵌套了触球点的空间位置数组。这种高度非结构化的数据形态无法直接输入至克里金空间地统计模型中。为此，本研究在预处理的初始阶段调用了 `allclean()` 函数对原始数据框进行了“扁平化”重塑 。 该操作成功将嵌套的地理位置信息剥离，转化为独立的 `location.x`（纵向推进坐标）和 `location.y`（横向位置坐标）字段 。StatsBomb 官方采用 $120 \times 80$ 的标准化二维坐标系，该坐标系在物理尺度上以“码（Yard）”为基准映射单元（$1$ 单位坐标 $\approx 0.914$ 米）。为最大程度保障原始追踪数据的空间拓扑纯度，避免在强行公制换算中引入浮点数计算误差，本研究在后续的空间相关性建模与克里金插值过程中，全流程未进行比例换算，而是严格沿用该“标准坐标单位（Standard Coordinate Unit）”作为距离量纲。后文涉及的所有空间距离参数（如变异函数中的滞后步长、变程等）均在此坐标体系下进行学术解释。
 
 ## 2.3 数据清洗与降噪机制
 
@@ -541,3 +541,25 @@ $$
 
 1.  **“斑块化碎裂”与后场迷信（KDE）**：在单场 KDE 热图中，由于缺乏足够的数据点支撑，原本平滑的密度表面发生了严重的“斑块化碎裂”。由于拜仁存在大量中卫与后腰间的安全倒脚，KDE 毫无悬念地将图谱中的“高热斑块”锚定在了本方半场，完全丢失了前场进攻三区的战术细节。
 2.  **先验知识引导下的强鲁棒性（克里金）**：反观基于克里金的单场价值场，即使面对极其稀疏的数据，模型依然输出了一张极度平滑、战术指向明确的高质量热图。其根本原因在于：**本研究的克里金插值调用了前文基于全赛季样本拟合的“全局变异函数”作为底层先验结构。** 在这种强大的地统计学先验约束下，克里金模型能够精准地将单场比赛的“绝对威胁区”还原在了对方大禁区弧顶。
+
+
+
+# 参考文献
+[1] Pappalardo, L., Cintia, P., Rossi, A., Massucco, E., Ferragina, P., Pedreschi, D., & Giannotti, F. (2019). A public data set of spatio-temporal match events in soccer competitions. Scientific data, 6(1), 236.
+[2] Cervone, D., Bornn, L., & Goldsberry, K. (2016, March). NBA court realty. In 10th MIT sloan sports analytics conference.
+[3] Fernandez, J., & Bornn, L. (2018, February). Wide Open Spaces: A statistical technique for measuring space creation in professional soccer. In Sloan sports analytics conference (Vol. 2018).
+[4] Buldú, J. M., Busquets, J., Martínez, J. H., Herrera-Diestra, J. L., Echegoyen, I., Galeano, J., & Luque, J. (2018). Using Network Science to Analyse Football Passing Networks: Dynamics, Space, Time, and the Multilayer Nature of the Game. Frontiers in psychology, 9, 1900.
+[5] Schultze, S., & Wellbrock, C. M. (2015). 'B-FASST': A Statistical and Spatial Analysis System to Evaluate Player Performance in Soccer. Available at SSRN 2643041.
+[6] Buldú, J. M., Busquets, J., Martínez, J. H., Herrera-Diestra, J. L., Echegoyen, I., Galeano, J., & Luque, J. (2018). Using network science to analyse football passing networks: Dynamics, space, time, and the multilayer nature of the game. Frontiers in psychology, 9, 1900.
+[7] Kim, H. C., Kwon, O., & Li, K. J. (2011, November). Spatial and spatiotemporal analysis of soccer. In Proceedings of the 19th ACM SIGSPATIAL international conference on advances in geographic information systems (pp. 385-388).
+[8] Link, D., Lang, S., & Seidenschwarz, P. (2016). Real time quantification of dangerousity in football using spatiotemporal tracking data. PloS one, 11(12), e0168768.
+[9] Fernández, J., & Bornn, L. (2020, September). Soccermap: A deep learning architecture for visually-interpretable analysis in soccer. In Joint European Conference on Machine Learning and Knowledge Discovery in Databases (pp. 491-506). Cham: Springer International Publishing.
+[10] Garrido, D., Burriel, B., Resta, R., del Campo, R. L., & Buldú, J. M. (2022). Heatmaps in soccer: Event vs tracking datasets. Chaos, Solitons & Fractals, 165, 112827.
+[11] Liu, N. (2022). GeoVisualisation of Football Players Movement. Olomouc. diplomová práce (Mgr.). Univerzita Palackého v Olomouci. Přírodovědecká fakulta.
+[12] Kotzbek, G., & Kainz, W. (2015, August). Gis-based football game analysis–a brief introduction to the applied data base and a guideline on how to utilise it. In Proceedings of the 27th International Cartographic Conference (pp. 1-10).
+[13] Memmert, D., Lemmink, K. A., & Sampaio, J. (2017). Current approaches to tactical performance analyses in soccer using position data. Sports medicine, 47(1), 1-10.
+[14] Thakali, L., Kwon, T. J., & Fu, L. (2015). Identification of crash hotspots using kernel density estimation and kriging methods: a comparison. Journal of Modern Transportation, 23(2), 93-106.
+[15] Wand, M. P., & Jones, M. C. (1994). Kernel smoothing. CRC press.
+[16] Rudd, S. (2011, September). A framework for tactical analysis and individual offensive production assessment in soccer using Markov chains. In New England symposium on statistics in sports (pp. 36-55).
+[17]Singh, K. (2018, February 15). Introducing expected threat (xT). Karun.in. https://karun.in/blog/expected-threat.html
+[18]Heiner, M., Fellingham, G. W., & Thomas, C. (2014). Skill importance in women’s soccer. Journal of Quantitative Analysis in Sports, 10(2), 287-302.
