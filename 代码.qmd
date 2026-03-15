@@ -117,6 +117,52 @@ write.csv(full_season_cleaned, "data/Bundesliga_1516_Events.csv", row.names = FA
 print(paste("清洗完毕，总行数:", nrow(full_season_cleaned)))
 ```
 
+# 数据概览
+```{r}
+# ==========================================
+# 论文第二章：数据规模与清洗信息一键统计
+# ==========================================
+
+# 1. 比赛场次数
+total_matches <- length(unique(all_1516_events$match_id))
+cat("1. 赛季总比赛场数:", total_matches, "\n")
+```
+
+
+```{r}
+# 2. 原始事件总数 (API刚抓下来的)
+raw_events_count <- nrow(all_1516_events)
+cat("2. 原始事件总条数:", raw_events_count, "\n")
+```
+
+
+```{r}
+# 3. 剔除了的非战术事件数 (Starting XI等)
+non_tactical_count <- all_1516_events %>% 
+  filter(type.name %in% c("Starting XI", "Half Start", "Half End")) %>% 
+  nrow()
+cat("3. 剔除的非战术事件条数:", non_tactical_count, "\n")
+```
+
+
+```{r}
+# 4. under_pressure 缺失比例 (原始数据中)
+# 注意：StatsBomb里FALSE通常是NA
+na_pressure_count <- sum(is.na(all_1516_events$under_pressure))
+na_pressure_rate <- na_pressure_count / raw_events_count
+cat("4. 原始数据中 under_pressure 缺失值数量:", na_pressure_count, 
+    " (占比: ", round(na_pressure_rate * 100, 2), "%)\n", sep="")
+```
+
+
+```{r}
+# 5. 清洗后基础事件总数
+cleaned_events_count <- nrow(full_season_cleaned)
+cat("5. 基础清洗后保留的事件总条数:", cleaned_events_count, "\n")
+```
+
+
+
 
 # 二、探索性数据分析 (EDA) - 为 Z 模型参数找依据
 ## 1. 射门密度图
@@ -237,6 +283,30 @@ grid_data <- final_model_data %>%
 
 ```
 
+```{r}
+# 6. 最终进入 Z 模型的样本数 (剔除了没算出来Z值的)
+final_model_count <- nrow(final_model_data)
+cat("6. 最终进入建模的有效样本数:", final_model_count, "\n")
+cat("   (在此步骤中剔除了", cleaned_events_count - final_model_count, "条无坐标或无法估值的记录)\n\n")
+```
+
+
+```{r}
+# 7. 核心事件占比统计 (用于填充表2)
+cat("--- 表2所需：核心事件分布与受压迫率 ---\n")
+event_stats <- final_model_data %>%
+  group_by(type.name) %>%
+  summarise(
+    Count = n(),
+    Percentage = round((n() / final_model_count) * 100, 2),
+    # 计算该类事件中受压迫的比例
+    Pressure_Rate = round((sum(under_pressure == TRUE, na.rm = TRUE) / n()) * 100, 2)
+  ) %>%
+  arrange(desc(Count)) %>%
+  head(10) # 打印前10大类事件
+
+print(as.data.frame(event_stats))
+```
 
 # 四、变异函数拟合与模型五折交叉验证
 ```{r,eval=FALSE}
