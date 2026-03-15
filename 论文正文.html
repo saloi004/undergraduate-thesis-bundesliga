@@ -530,6 +530,14 @@ window.Quarto = {
 </section>
 <section id="第三章-概念界定与理论模型介绍" class="level1">
 <h1>第三章 概念界定与理论模型介绍</h1>
+<p>在深入探讨具体的空间统计学公式与战术评价模型之前，有必要对本研究的核心研究范式与底层数学对象进行严格界定。本章所构建的理论框架，其本质并非对现有足球热图的可视化渲染增强，而是基于地统计学（Geostatistics）的严密<strong>空间推断（Spatial Inference）</strong>过程。为了消除后续模型推导中的概念歧义，特对以下四个核心研究要素进行明确：</p>
+<ol type="1">
+<li><p><strong>评价指标（Z）的本体论界定</strong> 本研究所构建的战术价值 <span class="math inline">\(Z\)</span> 模型，并非黑盒式的机器学习预测概率，而是<strong>高度可解释的战术价值代理指标（Interpretable Tactical Value Proxy）</strong>。它是一种结合了领域先验知识的启发式综合评分，通过对基础战术动作、空间坐标特征、防守压迫环境及控球质量进行显式地数学加权，将抽象的“比赛影响力”具象化为连续、可计算的标量数值。</p></li>
+<li><p><strong>克里金（Kriging）插值的观测对象</strong> 在空间插值模型中，本研究的底层离散观测对象<strong>并非原始的单次触球事件点</strong>，而是<strong>经过空间网格化聚合后的离散均值点</strong>。具体而言，全场原始事件首先被映射至 <span class="math inline">\(1 \times 1\)</span> 米的离散网格系中，并在剔除极低频噪点后计算网格内的 <span class="math inline">\(Z\)</span> 值均值。这一预处理将具有高度随机性的瞬时战术事件，转化为了具有稳定空间自相关性的可靠先验观测点，从而满足了地统计学对输入数据的平稳性假设。</p></li>
+<li><p><strong>空间推断的预测单元</strong> 本研究推断的预测单元是<strong>覆盖全场（<span class="math inline">\(120 \times 80\)</span>）的连续空间表面（Continuous Spatial Surface）</strong>。模型依托有限的离散网格观测点，通过拟合半变异函数提取隐藏的空间结构特征，进而预测出球场上每一个未经直接观测的坐标点（精确至 <span class="math inline">\(1 \times 1\)</span> 单元）的最优无偏战术价值，实现从“点状离散数据”到“面状连续场”的维度跨越。</p></li>
+<li><p><strong>最终的评价目标导向</strong> 本模型构建的最终标的，跨越了传统热图的“可视化解释（Visual Explanation）”层次，直指量化的<strong>战术诊断（Tactical Diagnosis）</strong>。通过严谨的交叉验证（LOOCV）保障空间推断的预测精度后，本研究利用推断生成的战术价值场，对球队整体的战略重心倾斜、核心球员的战术辐射范围（溢出效应）以及攻防强弱侧进行精准的量化剥离与对比诊断。</p></li>
+</ol>
+<p>明确上述研究范式后，本章将按逻辑顺次展开：首先对比剖析传统空间分布估计模型（KDE）的局限性；随后引入空间统计学与克里金插值的数学原理；进而详细推导 <span class="math inline">\(Z\)</span> 模型的构建逻辑；最后完成空间变异特性的参数拟合与模型精度评估。</p>
 <section id="传统空间分布估计模型" class="level2">
 <h2 class="anchored" data-anchor-id="传统空间分布估计模型">3.1 传统空间分布估计模型</h2>
 <section id="核密度估计法-kernel-density-estimation-kde" class="level3">
@@ -641,7 +649,7 @@ window.Quarto = {
 <p>本研究的 Z 模型包含四个核心维度：动作类型、空间位置、防守压迫与传球高度。其选取依据不仅立足于前沿的运动科学理论，更得到了德甲 15/16 赛季全样本数据的客观支撑。</p>
 <p>本模型所计算的 <span class="math inline">\(Z\)</span> 分数，衡量的是特定战术动作在球场空间内产生的<strong>“整体战术重要性（Tactical Importance）”与“空间控制贡献度（Spatial Value Contribution）”</strong>，而非传统意义上单一指向对方球门的“进攻威胁值（如 Expected Threat, xT）”。</p>
 <p>基于这一核心量纲定义，本模型在评价体系中打破了传统数据分析中攻防两端的割裂。在真实的比赛博弈中，一次极具威胁的射门（试图改变比分的进攻极端动作）与一次关键的门将扑救或禁区内解围（试图阻止比分改变的防守极端动作），在改变或维持比赛动态平衡（Match State）的作用权重上具有同等的核心战略地位。</p>
-<p>因此，在本模型的基础战术分（<span class="math inline">\(S_{base}\)</span>）设定中，射门与关键扑救被置于同一标度量级（均赋予最高的 10 分基础分），解围与封堵等核心防守动作同样被赋予高分。这种“绝对值化”的评估逻辑，旨在将攻防两端的高价值战术节点统一投射到同一个“比赛影响力”标尺上，从而为后续在全场二维坐标系中生成连续的、包含攻防双向权重的战术价值空间场（Spatial Value Field）提供逻辑自洽的数学基础。</p>
+<p>例如，在本模型的基础战术分（<span class="math inline">\(S_{base}\)</span>）设定中，射门与关键扑救被置于同一标度量级（均赋予最高的 10 分基础分），解围与封堵等核心防守动作同样被赋予高分。这种“绝对值化”的评估逻辑，旨在将攻防两端的高价值战术节点统一投射到同一个“比赛影响力”标尺上，从而为后续在全场二维坐标系中生成连续的、包含攻防双向权重的战术价值空间场（Spatial Value Field）提供逻辑自洽的数学基础。</p>
 <section id="动作类型维度-s_base-的选取依据" class="level4">
 <h4 class="anchored" data-anchor-id="动作类型维度-s_base-的选取依据">1. 动作类型维度 (<span class="math inline">\(S_{base}\)</span>) 的选取依据</h4>
 <p><strong>理论支持：基于马尔可夫链的“动作状态转换”理论</strong> 在现代足球量化分析中，Decroos 等人 (2019) 提出的 VAEP (Valuing Actions by Estimating Probabilities) 框架确立了基于事件驱动（Event-driven）的动作评价范式。该理论将足球比赛视为一系列离散动作的状态转移过程，证明了传球、射门、防守解围等不同行为对预期进球（xG）的贡献度存在显著的层级差异。本研究设定的基础动作分（<span class="math inline">\(S_{base}\)</span>）正是基于这一状态转换理论，旨在对不同技术动作赋予其天然的期望收益权重。</p>
