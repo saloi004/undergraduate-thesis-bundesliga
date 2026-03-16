@@ -125,7 +125,6 @@ window.Quarto = {
   <li><a href="#空间变异特性的提取与参数拟合" id="toc-空间变异特性的提取与参数拟合" class="nav-link" data-scroll-target="#空间变异特性的提取与参数拟合">3.4 空间变异特性的提取与参数拟合</a>
   <ul class="collapse">
   <li><a href="#空间搜索距离与邻域参数的设定" id="toc-空间搜索距离与邻域参数的设定" class="nav-link" data-scroll-target="#空间搜索距离与邻域参数的设定">3.4.1 空间搜索距离与邻域参数的设定</a></li>
-  <li><a href="#空间搜索距离与邻域参数的设定-1" id="toc-空间搜索距离与邻域参数的设定-1" class="nav-link" data-scroll-target="#空间搜索距离与邻域参数的设定-1">3.4.1 空间搜索距离与邻域参数的设定</a></li>
   <li><a href="#变异函数的提取与理论拟合" id="toc-变异函数的提取与理论拟合" class="nav-link" data-scroll-target="#变异函数的提取与理论拟合">3.4.2 变异函数的提取与理论拟合</a></li>
   </ul></li>
   <li><a href="#模型预测精度评估5折交叉验证5-fold-cv" id="toc-模型预测精度评估5折交叉验证5-fold-cv" class="nav-link" data-scroll-target="#模型预测精度评估5折交叉验证5-fold-cv">3.5 模型预测精度评估：5折交叉验证（5-fold CV）</a></li>
@@ -649,7 +648,7 @@ window.Quarto = {
 <p>本研究的 Z 模型包含四个核心维度：动作类型、空间位置、防守压迫与传球高度。其选取依据不仅立足于前沿的运动科学理论，更得到了德甲 15/16 赛季全样本数据的客观支撑。</p>
 <p>本模型所计算的 <span class="math inline">\(Z\)</span> 分数，衡量的是特定战术动作在球场空间内产生的<strong>“整体战术重要性（Tactical Importance）”与“空间控制贡献度（Spatial Value Contribution）”</strong>，而非传统意义上单一指向对方球门的“进攻威胁值（如 Expected Threat, xT）”。</p>
 <p>基于这一核心量纲定义，本模型在评价体系中打破了传统数据分析中攻防两端的割裂。在真实的比赛博弈中，一次极具威胁的射门（试图改变比分的进攻极端动作）与一次关键的门将扑救或禁区内解围（试图阻止比分改变的防守极端动作），在改变或维持比赛动态平衡（Match State）的作用权重上具有同等的核心战略地位。</p>
-<p>例如，在本模型的基础战术分（<span class="math inline">\(S_{base}\)</span>）设定中，射门与关键扑救被置于同一标度量级（均赋予最高的 10 分基础分），解围与封堵等核心防守动作同样被赋予高分。这种“绝对值化”的评估逻辑，旨在将攻防两端的高价值战术节点统一投射到同一个“比赛影响力”标尺上，从而为后续在全场二维坐标系中生成连续的、包含攻防双向权重的战术价值空间场（Spatial Value Field）提供逻辑自洽的数学基础。</p>
+<p>例如，在本模型的基础战术分（<span class="math inline">\(S_{base}\)</span>）设定中，射门与关键扑救被置于同一标度量级，解围与封堵等核心防守动作同样被赋予高分。这种“绝对值化”的评估逻辑，旨在将攻防两端的高价值战术节点统一投射到同一个“比赛影响力”标尺上，从而为后续在全场二维坐标系中生成连续的、包含攻防双向权重的战术价值空间场（Spatial Value Field）提供逻辑自洽的数学基础。</p>
 <section id="动作类型维度-s_base-的选取依据" class="level4">
 <h4 class="anchored" data-anchor-id="动作类型维度-s_base-的选取依据">1. 动作类型维度 (<span class="math inline">\(S_{base}\)</span>) 的选取依据</h4>
 <p><strong>理论支持：基于马尔可夫链的“动作状态转换”理论</strong> 在现代足球量化分析中，Decroos 等人 (2019) 提出的 VAEP (Valuing Actions by Estimating Probabilities) 框架确立了基于事件驱动（Event-driven）的动作评价范式。该理论将足球比赛视为一系列离散动作的状态转移过程，证明了传球、射门、防守解围等不同行为对预期进球（xG）的贡献度存在显著的层级差异。本研究设定的基础动作分（<span class="math inline">\(S_{base}\)</span>）正是基于这一状态转换理论，旨在对不同技术动作赋予其天然的期望收益权重。</p>
@@ -694,13 +693,22 @@ window.Quarto = {
 </section>
 <section id="z-模型的多维特征乘法构建" class="level3">
 <h3 class="anchored" data-anchor-id="z-模型的多维特征乘法构建">3.3.2 Z 模型的多维特征乘法构建</h3>
+<p>在对各个战术维度进行具体赋值之前，必须首先阐明本研究核心评估模型（<span class="math inline">\(Z\)</span> 模型）的两个底层数学构建原则：乘法聚合机制与启发式分段赋权。</p>
+<section id="乘法聚合机制战术元素的协同放大与一票否决" class="level4">
+<h4 class="anchored" data-anchor-id="乘法聚合机制战术元素的协同放大与一票否决">1. 乘法聚合机制：战术元素的“协同放大”与“一票否决”</h4>
+<p>本研究并未采用常规的线性加权求和（Additive Model, 即 <span class="math inline">\(Z = S + W + C + Q\)</span>），而是刻意设计了连乘模型（Multiplicative Model, 即 <span class="math inline">\(Z = S_{base} \times W_{space} \times C_{pressure} \times Q_{height}\)</span>）。这一设定的理论初衷在于高度还原足球比赛中战术行为的<strong>“条件依赖性（Conditional Dependency）”</strong>与<strong>“木桶效应”</strong>。 在线性加法模型中，各项指标是相互独立的，一项得分极低可以通过另一项的高分来弥补；但这严重违背了足球规律——例如，在极具威胁的对方禁区（<span class="math inline">\(W_{space}\)</span> 极高）出现了一次停球失误（<span class="math inline">\(S_{base}\)</span> 为负数或极低），其战术价值理应被严重压低甚至记为负面，而不是被高价值的空间坐标“中和”成一个平庸的正数。乘法模型意味着“任何一个维度的严重短板都会无情压低总体价值”，反之，当绝佳的空间、高难度的抗压与精准的动作结合时，乘法机制又能产生非线性的“协同放大”效应。</p>
+</section>
+<section id="启发式分段赋权heuristic-piecewise-weighting的合理性" class="level4">
+<h4 class="anchored" data-anchor-id="启发式分段赋权heuristic-piecewise-weighting的合理性">2. 启发式分段赋权（Heuristic Piecewise Weighting）的合理性</h4>
+<p>在各项具体系数（如角球空间权重设为 2.5、受压迫系数设为 1.5、失误统一衰减等）的设定上，本研究秉持了“启发式专家系统”的构建逻辑。 虽然深度学习等纯数据驱动模型（Data-driven Models）可以通过黑盒算法自动拟合权重，但往往会丧失微观战术层面的可解释性。足球比赛充满了非连续的战术突变（例如，角球直接越过了中场推进的繁琐空间阻力，因此理应在空间权重上赋予 2.5 的直接溢价；而失误则是对球权的绝对终结，需施加强力惩罚）。<strong>因此，本研究采用规则型赋权（Rule-based Weighting）以最大化增强模型的可解释性与战术直观性。</strong> 这些分段设定的数值并非绝对的物理常数，而是代表了不同战术情境之间<strong>相对重要性的标度（Relative Magnitude）</strong>。本研究通过这种显式的规则设定定下估值基调，并通过后续严密的参数敏感性分析（OAT）与宏微观实证对比，验证了该主观赋权体系的区分能力与极强的鲁棒性。</p>
 <p>在确立上述特征维度的合理性后，本研究采用多维特征乘法模型构建最终的球权战术价值指标 <span class="math inline">\(Z\)</span>。公式定义如下：</p>
 <p><span class="math display">\[Z = S_{base} \times W_{space}(x, y) \times C_{pressure} \times Q_{quality}\]</span></p>
 <p>各子模块的具体数学设定如下：</p>
+</section>
 <section id="基础动作分-s_base" class="level4">
 <h4 class="anchored" data-anchor-id="基础动作分-s_base">1. 基础动作分 (<span class="math inline">\(S_{base}\)</span>)</h4>
 <p>模型依据战术影响程度，对不同类型的技术动作进行固有威胁等级赋值（详见表2-1）。特别设立了针对失误行为的负分机制。</p>
-<p><strong>表2-1 基础动作战术价值等级赋值表</strong></p>
+<p><strong>表 基础动作战术价值等级赋值表</strong></p>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -955,10 +963,6 @@ window.Quarto = {
 <section id="空间搜索距离与邻域参数的设定" class="level3">
 <h3 class="anchored" data-anchor-id="空间搜索距离与邻域参数的设定">3.4.1 空间搜索距离与邻域参数的设定</h3>
 <p>在计算空间实验变异函数与执行普通克里金插值之前，必须结合足球场的物理尺度与比赛的实际战术规律，对核心参数进行严格界定：</p>
-</section>
-<section id="空间搜索距离与邻域参数的设定-1" class="level3">
-<h3 class="anchored" data-anchor-id="空间搜索距离与邻域参数的设定-1">3.4.1 空间搜索距离与邻域参数的设定</h3>
-<p>在计算空间实验变异函数与执行普通克里金插值之前，必须结合足球场的物理尺度与比赛的实际战术规律，对核心参数进行严格界定：</p>
 <ol type="1">
 <li><strong>空间滞后步长（<code>width = 2</code> 个坐标单位）</strong>：步长决定了空间距离的分组精度。在现代足球中，传球线路、防守站位往往发生在微观尺度上。2 个坐标单位（2码，约 1.8 米，以下未明确赘述的坐标单位默认位码）的距离往往意味着一名防守球员的“一步之遥”。本研究将步长设定为 2，既能精细捕捉战术价值的微小空间衰减，又能保证分组内样本充足。</li>
 <li><strong>最大截断距离（<code>cutoff = 60</code> 个坐标单位）</strong>：截断距离决定了变异函数计算的最大空间跨度。标准足球场一次常规的长传转移极限距离约在 50-60 个坐标单位左右（半场长度）。超过此距离的两点通常不具备直接的连带效应。因此设定为 60，以消除长距离噪音对基台值拟合的干扰。</li>
@@ -1199,7 +1203,7 @@ C_0 + C \left( 1 - \exp\left(-\frac{h}{a}\right) \right), &amp; h &gt; 0
 </section>
 <section id="空间可视化范式跨越传统-kde-与克里金价值场的实证对比" class="level2">
 <h2 class="anchored" data-anchor-id="空间可视化范式跨越传统-kde-与克里金价值场的实证对比">3.7 空间可视化范式跨越：传统 KDE 与克里金价值场的实证对比</h2>
-<p>在论证了底层数学插值算法（OK 与 UK）的选型合理性后，本节将回归足球战术分析的业务本质。为直观展示本研究构建的“克里金战术价值场”相较于目前工业界主流的“核密度估计（KDE）频率图”所具备的降维打击优势，本研究将分别从“全联盟宏观大样本”与“单场微观稀疏样本”两个极端尺度展开硬核的交叉对比。</p>
+<p>在论证了底层数学插值算法（OK 与 UK）的选型合理性后，本节将回归足球战术分析的业务本质。为直观展示本研究构建的“克里金战术价值场”相较于目前工业界主流的“核密度估计（KDE）频率图”所具备的降维打击优势，本研究将分别从“全联盟宏观大样本”与“单场微观稀疏样本”两个极端尺度展开的交叉对比。</p>
 <section id="宏观全景视角全联盟价值基准场的剥离效应" class="level3">
 <h3 class="anchored" data-anchor-id="宏观全景视角全联盟价值基准场的剥离效应">3.7.1 宏观全景视角：全联盟价值基准场的剥离效应</h3>
 <div class="quarto-figure quarto-figure-center">
@@ -1216,7 +1220,7 @@ C_0 + C \left( 1 - \exp\left(-\frac{h}{a}\right) \right), &amp; h &gt; 0
 </div>
 <p>观察得到，在德甲全样本的宏观尺度下，两类算法呈现出了截然不同的空间推断结果：</p>
 <ol type="1">
-<li><p><strong>“海量庸常数据”的视觉霸权（KDE的局限）</strong>：在全联盟 KDE 热图中，最深的热点区域形成了一个巨大的椭圆形，极其臃肿地淤积于中圈及本方防守三区。这是因为在现代足球中，绝大部分控球时间都消耗在后场的安全倒脚上（高频低危动作）。KDE 作为单纯的“点位频率估算”，不可避免地赋予了这些庸常数据极高的视觉权重，导致真正产生致命威胁的进攻三区在图中显得黯淡无光。</p></li>
+<li><p><strong>“海量庸常数据”的视觉霸权（KDE的局限）</strong>：正如 3.1.1 节所推演的理论缺陷，KDE 热区在单场稀疏样本下出现了严重的热区碎裂与孤岛效应，而克里金模型则凭借空间自相关先验，成功平滑重构了进攻走廊。在全联盟 KDE 热图中，最深的热点区域形成了一个巨大的椭圆形，极其臃肿地淤积于中圈及本方防守三区。这是因为在现代足球中，绝大部分控球时间都消耗在后场的安全倒脚上（高频低危动作）。KDE 作为单纯的“点位频率估算”，不可避免地赋予了这些庸常数据极高的视觉权重，导致真正产生致命威胁的进攻三区在图中显得黯淡无光。</p></li>
 <li><p><strong>“高价值空间”的提纯剥离（克里金的优势）</strong>：反观基于克里金与 <span class="math inline">\(Z\)</span> 模型的全联盟价值场图中，由于 <span class="math inline">\(Z\)</span> 模型对高危区域的高难度动作赋予了指数级的权重补偿，克里金图谱中的“绝对深红区”极其精准地推演至了对方大禁区前沿（Zone 14）及两侧底线传中区。它在视觉上彻底剔除了中场倒脚的冗余噪音，完美提纯了联赛真实的“战术红利区”。</p></li>
 </ol>
 </section>
