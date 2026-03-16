@@ -13,7 +13,7 @@ dir.create("data", showWarnings = FALSE)
 dir.create("output_figures", showWarnings = FALSE)
 
 # 1. 包加载
-library(StatsBombR)
+library(StatsBombR) 
 library(tidyverse)
 library(ggplot2)
 library(gstat)
