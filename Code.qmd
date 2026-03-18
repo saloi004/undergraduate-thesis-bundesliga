@@ -509,6 +509,185 @@ metrics_table <- bind_rows(
 
 write.csv(metrics_table, "output_figures/Player_Core_Spatial_Metrics.csv", row.names = FALSE)
 ```
+```{r}
+calculate_advanced_metrics <- function(player_df, player_name) {
+  player_df %>%
+    mutate(
+      positive_val = ifelse(var1.pred > 0, var1.pred, 0),
+      high_threat = var1.pred > 8
+    ) %>%
+    summarise(
+      Player = player_name,
+      
+      # 基础强度
+      Mean_Value = mean(var1.pred, na.rm = TRUE),
+      Total_Value = sum(positive_val, na.rm = TRUE),
+      
+      # 高威胁占比
+      High_Threat_Ratio = mean(high_threat, na.rm = TRUE),
+      
+      # 战术重心
+      Centroid_X = sum(x * positive_val) / sum(positive_val),
+      Centroid_Y = sum(y * positive_val) / sum(positive_val),
+      
+      # 前场 vs 后场
+      Front_Field_Value = sum(ifelse(x >= 80, positive_val, 0)),
+      Mid_Field_Value   = sum(ifelse(x >= 40 & x < 80, positive_val, 0)),
+      Back_Field_Value  = sum(ifelse(x < 40, positive_val, 0)),
+      
+      # Zone14（核心进攻区）
+      Zone14_Value = sum(ifelse(x >= 80 & x <= 100 & y >= 30 & y <= 50, positive_val, 0))
+    )
+}
+
+advanced_metrics_table <- bind_rows(
+  calculate_advanced_metrics(mkhi_df, "Mkhitaryan"),
+  calculate_advanced_metrics(auba_df, "Aubameyang"),
+  calculate_advanced_metrics(weigl_df, "Weigl"),
+  calculate_advanced_metrics(hummels_df, "Hummels")
+) %>%
+  mutate(
+    Centroid_X = round(Centroid_X, 1),
+    Centroid_Y = round(Centroid_Y, 1),
+    Mean_Value = round(Mean_Value, 2),
+    High_Threat_Ratio = round(High_Threat_Ratio, 3)
+  )
+
+write.csv(advanced_metrics_table, "output_figures/Player_Advanced_Metrics.csv", row.names = FALSE)
+
+
+zone_ratio_table <- advanced_metrics_table %>%
+  mutate(
+    Total = Front_Field_Value + Mid_Field_Value + Back_Field_Value,
+    Front_Ratio = round(Front_Field_Value / Total, 3),
+    Mid_Ratio   = round(Mid_Field_Value / Total, 3),
+    Back_Ratio  = round(Back_Field_Value / Total, 3)
+  ) %>%
+  select(Player, Front_Ratio, Mid_Ratio, Back_Ratio)
+
+write.csv(zone_ratio_table, "output_figures/Player_Zone_Ratio.csv", row.names = FALSE)
+
+
+high_value_distribution <- function(player_df, player_name) {
+  player_df %>%
+    mutate(high_zone = case_when(
+      var1.pred > 10 ~ "Very High",
+      var1.pred > 8  ~ "High",
+      var1.pred > 5  ~ "Medium",
+      TRUE ~ "Low"
+    )) %>%
+    count(high_zone) %>%
+    mutate(Player = player_name)
+}
+
+high_value_table <- bind_rows(
+  high_value_distribution(mkhi_df, "Mkhitaryan"),
+  high_value_distribution(auba_df, "Aubameyang"),
+  high_value_distribution(weigl_df, "Weigl"),
+  high_value_distribution(hummels_df, "Hummels")
+)
+
+write.csv(high_value_table, "output_figures/Player_Value_Distribution.csv", row.names = FALSE)
+
+
+get_top_hotspots <- function(player_df, player_name) {
+  player_df %>%
+    arrange(desc(var1.pred)) %>%
+    head(10) %>%
+    mutate(Player = player_name) %>%
+    select(Player, x, y, var1.pred)
+}
+
+top_hotspots <- bind_rows(
+  get_top_hotspots(mkhi_df, "Mkhitaryan"),
+  get_top_hotspots(auba_df, "Aubameyang"),
+  get_top_hotspots(weigl_df, "Weigl"),
+  get_top_hotspots(hummels_df, "Hummels")
+)
+
+write.csv(top_hotspots, "output_figures/Top_Hotspots.csv", row.names = FALSE)
+
+
+# ==========================================
+# 5️⃣ LaTeX三线表输出（论文直接用）
+# ==========================================
+library(xtable)
+
+latex_table <- xtable(advanced_metrics_table)
+
+print(latex_table,
+      file = "output_figures/player_metrics_table.tex",
+      include.rownames = FALSE,
+      sanitize.text.function = identity)
+```
+
+```{r}
+calculate_balance_metrics <- function(player_df, player_name) {
+  
+  df <- player_df %>%
+    mutate(
+      val = ifelse(var1.pred > 0, var1.pred, 0),
+      zone = case_when(
+        x < 40 ~ "defense",
+        x < 80 ~ "midfield",
+        TRUE ~ "attack"
+      )
+    )
+  
+  data.frame(
+    Player = player_name,
+    
+    # 攻防分解
+    Attack_Value = sum(df$val[df$zone == "attack"]),
+    Midfield_Control = sum(df$val[df$zone == "midfield"]),
+    Defense_Value = sum(df$val[df$zone == "defense"]),
+    
+    # 威胁
+    High_Threat_Ratio = mean(df$var1.pred > 8),
+    
+    # 稳定性（越低越稳定）
+    Stability = sd(df$var1.pred, na.rm = TRUE),
+    
+    # 覆盖范围
+    Coverage = sum(df$val > 1)
+  )
+}
+
+balance_table <- bind_rows(
+  calculate_balance_metrics(mkhi_df, "Mkhitaryan"),
+  calculate_balance_metrics(auba_df, "Aubameyang"),
+  calculate_balance_metrics(weigl_df, "Weigl"),
+  calculate_balance_metrics(hummels_df, "Hummels")
+)
+
+write.csv(balance_table, "output_figures/Player_Balance_Metrics.csv", row.names = FALSE)
+
+library(scales)
+
+radar_data <- balance_table
+
+radar_data_scaled <- radar_data %>%
+  mutate(across(-Player, ~ rescale(.)))  # 0-1归一化
+
+library(ggradar)
+library(tibble)
+
+radar_plot_data <- radar_data_scaled %>%
+  rename(group = Player) %>%
+  as_tibble()
+
+pdf("output_figures/player_radar_chart.pdf", width = 8, height = 6)
+
+ggradar(radar_plot_data,
+        grid.min = 0,
+        grid.mid = 0.5,
+        grid.max = 1,
+        legend.position = "right") +
+  ggtitle("Player Tactical Balance Radar")
+
+dev.off()
+```
+
 
 # 八、稳健性检验：多维主观参数的敏感性分析
 ```{r,eval=FALSE}

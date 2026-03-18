@@ -346,7 +346,7 @@ $$\sigma_K^2 = \sum_{i=1}^{n} \lambda_i \gamma(x_i, x_0) + \mu$$
 
 **数据支持：定位球的高转化率溢价** 传统基于欧氏距离的空间模型往往会严重低估角球的价值，因为其发生地位于球场四个角落（远离球门中心）。然而，对德甲数据的实证检验推翻了这一直觉：
 
-![传球类型助攻率对比率](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/EDA_%E4%BC%A0%E7%90%83%E7%B1%BB%E5%9E%8B%E5%8A%A9%E6%94%BB%E7%8E%87%E5%AF%B9%E6%AF%94.png?raw=true)
+![传球类型助攻率对比率](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/EDA_Pass_Type_Assist_Rate.png?raw=true)
 
 数据结果显示，角球直接形成射门助的概率远高于运动战常规传球。这证明了定位球具有跨越空间距离直接威胁球门的能力，为后续模型中赋予定位球极高的基础分与空间豁免权提供了坚实依据。
 
@@ -356,7 +356,7 @@ $$\sigma_K^2 = \sum_{i=1}^{n} \lambda_i \gamma(x_i, x_0) + \mu$$
 
 **数据验证：射门事件的二维核密度分布** 为验证上述理论，本研究提取全赛季射门数据并绘制了空间密度分布图：
 
-![射门密度分布](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/EDA_%E5%B0%84%E9%97%A8%E5%AF%86%E5%BA%A6%E5%88%86%E5%B8%83.png?raw=true)
+![射门密度分布](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/EDA_Shot_Density.png?raw=true)
 
 如核密度图所示，绝对得分机会高度向心聚拢于对方禁区中路（$X > 100, Y \in [30, 50]$）。这在统计学上完美印证了“向心推进”的战术溢价规律。
 
@@ -366,7 +366,7 @@ $$\sigma_K^2 = \sum_{i=1}^{n} \lambda_i \gamma(x_i, x_0) + \mu$$
 
 **数据验证：防守压力下的失误率激增**
 
-![不同压力失误率对比](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/EDA_%E4%B8%8D%E5%90%8C%E5%8E%8B%E5%8A%9B%E5%A4%B1%E8%AF%AF%E7%8E%87%E5%AF%B9%E6%AF%94.png?raw=true)
+![不同压力失误率对比](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/EDA_Pressure_Error_Rate.png?raw=true)
 
 统计证实，受压迫状态下的技术失误率呈倍数级增加。基于“风险与收益对等”法则，在极端防守约束下完成的高难度战术动作理应获得溢价补偿，这为设定压力系数提供了实证支撑。
 
@@ -374,7 +374,7 @@ $$\sigma_K^2 = \sum_{i=1}^{n} \lambda_i \gamma(x_i, x_0) + \mu$$
 
 **理论支持：瓜迪奥拉的“地面控制”战术哲学** 本研究的实证对象为 15/16 赛季的德甲联赛（瓜迪奥拉执教时期）。现代传控足球的战术哲学极度强调对球权的绝对控制，而地面传球（Ground Pass）相比于高空球（High Pass）拥有更高的球权保留率和更低的失误方差。因此，引入传球高度作为控球质量修正参数（$Q_{quality}$），是对赛事时代背景与主流战术理念的客观还原。
 
-**数据验证：随着传球高度失误率激增** ![传球高度失误率对比](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/EDA_%E4%BC%A0%E7%90%83%E9%AB%98%E5%BA%A6%E5%A4%B1%E8%AF%AF%E7%8E%87%E5%AF%B9%E6%AF%94.png?raw=true)
+**数据验证：随着传球高度失误率激增** ![传球高度失误率对比](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/EDA_Pass_Height_Error_Rate.png?raw=true)
 
 ### 3.3.2 Z 模型的多维特征乘法构建
 
@@ -459,7 +459,7 @@ $$Q_{quality} = \begin{cases} 0.8, & \text{if High Pass (高空球)} \\ 0.9, & \
 ### 多维主观参数敏感性分析结果 (OAT)
 
 | 测试参数 (Parameter)              |   扰动比例    | 均值 (Mean Z) | 标准差 (SD Z) |
-|:----------------------------------|:-------------:|:-------------:|:-------------:|
+|:---------------------------|:-------------:|:-------------:|:-------------:|
 | **基础战术分 (**$s_{base}$)       |     -20%      |     1.747     |     0.342     |
 |                                   |     -10%      |     1.965     |     0.385     |
 |                                   | **0% (基准)** |   **2.183**   |   **0.428**   |
@@ -481,7 +481,7 @@ $$Q_{quality} = \begin{cases} 0.8, & \text{if High Pass (高空球)} \\ 0.9, & \
 |                                   |     +10%      |     2.203     |     0.419     |
 |                                   |     +20%      |     2.223     |     0.419     |
 
-![主观参数敏感性分析](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Model_%E5%A4%9A%E7%BB%B4%E5%8F%82%E6%95%B0%E6%95%8F%E6%84%9F%E6%80%A7%E6%8A%98%E7%BA%BF%E5%9B%BE.png?raw=true)
+![主观参数敏感性分析](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Model_Sensitivity_Line_Plot.png?raw=true)
 
 #### 结论：
 
@@ -505,7 +505,7 @@ $$Q_{quality} = \begin{cases} 0.8, & \text{if High Pass (高空球)} \\ 0.9, & \
 
 本研究计算了德甲球权价值分布的空间实验变异函数，并采用指数模型（Exponential Model）进行了理论拟合。
 
-![变异函数拟合图](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Model_%E5%8F%98%E5%BC%82%E5%87%BD%E6%95%B0%E6%8B%9F%E5%90%88%E5%9B%BE.png?raw=true)
+![变异函数拟合图](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Model_Variogram_Fit.png?raw=true)
 
 该图在统计学层面为普通克里金插值提供了核心参数化依据，展示了以下关键战术特征：
 
@@ -618,9 +618,9 @@ $$
 
 ### 3.7.1 宏观全景视角：全联盟价值基准场的剥离效应
 
-![全联盟 KDE 触球频率场 (传统方法)](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Macro_%E5%85%A8%E8%81%94%E7%9B%9F_KDE%E5%9F%BA%E5%87%86%E5%9C%BA.png?raw=true)
+![全联盟 KDE 触球频率场 (传统方法)](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Macro_League_KDE_Baseline.png?raw=true)
 
-![全联盟普通克里金(OK)基准场](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Macro_%E5%85%A8%E8%81%94%E7%9B%9F_OK%E5%9F%BA%E5%87%86%E5%9C%BA.png?raw=true)
+![全联盟普通克里金(OK)基准场](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Macro_League_OK_Baseline.png?raw=true)
 
 观察得到，在德甲全样本的宏观尺度下，两类算法呈现出了截然不同的空间推断结果：
 
@@ -632,15 +632,103 @@ $$
 
 在实际赛后复盘中，教练组往往需要针对“单一特定场次”进行空间解剖。然而，单场比赛单支球队的触球样本通常仅有 600-800 次，这种空间稀疏性对算法的“小样本鲁棒性”提出了极大挑战。为此，本研究随机抽取拜仁慕尼黑的单场比赛数据进行了微观极限测试。
 
-![拜仁单场 KDE 触球频率场](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Micro_%E6%8B%9C%E4%BB%81%E5%8D%95%E5%9C%BA_KDE%E5%AF%B9%E6%AF%94%E5%9B%BE.png?raw=true)
+![拜仁单场 KDE 触球频率场](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Micro_Bayern_Single_KDE.png?raw=true)
 
-![拜仁单场 克里金战术价值场](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Micro_%E6%8B%9C%E4%BB%81%E5%8D%95%E5%9C%BA_OK%E5%AF%B9%E6%AF%94%E5%9B%BE.png?raw=true)
+![拜仁单场 克里金战术价值场](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Micro_Bayern_Single_OK.png?raw=true)
 
 观察得到，在单场小样本下，两种方法产生了决定性的推断落差：
 
 1.  **“斑块化碎裂”与后场迷信（KDE）**：在单场 KDE 热图中，由于缺乏足够的数据点支撑，原本平滑的密度表面发生了严重的“斑块化碎裂”。由于拜仁存在大量中卫与后腰间的安全倒脚，KDE 毫无悬念地将图谱中的“高热斑块”锚定在了本方半场，完全丢失了前场进攻三区的战术细节。
 2.  **先验知识引导下的强鲁棒性（克里金）**：反观基于克里金的单场价值场，即使面对极其稀疏的数据，模型依然输出了一张极度平滑、战术指向明确的高质量热图。其根本原因在于：**本研究的克里金插值调用了前文基于全赛季样本拟合的“全局变异函数”作为底层先验结构。** 在这种强大的地统计学先验约束下，克里金模型能够精准地将单场比赛的“绝对威胁区”还原在了对方大禁区弧顶。
 
-# 参考文献
 
-\[1\] Pappalardo, L., Cintia, P., Rossi, A., Massucco, E., Ferragina, P., Pedreschi, D., & Giannotti, F. (2019). A public data set of spatio-temporal match events in soccer competitions. Scientific data, 6(1), 236. \[2\] Cervone, D., Bornn, L., & Goldsberry, K. (2016, March). NBA court realty. In 10th MIT sloan sports analytics conference. \[3\] Fernandez, J., & Bornn, L. (2018, February). Wide Open Spaces: A statistical technique for measuring space creation in professional soccer. In Sloan sports analytics conference (Vol. 2018). \[4\] Buldú, J. M., Busquets, J., Martínez, J. H., Herrera-Diestra, J. L., Echegoyen, I., Galeano, J., & Luque, J. (2018). Using Network Science to Analyse Football Passing Networks: Dynamics, Space, Time, and the Multilayer Nature of the Game. Frontiers in psychology, 9, 1900. \[5\] Schultze, S., & Wellbrock, C. M. (2015). 'B-FASST': A Statistical and Spatial Analysis System to Evaluate Player Performance in Soccer. Available at SSRN 2643041. \[6\] Buldú, J. M., Busquets, J., Martínez, J. H., Herrera-Diestra, J. L., Echegoyen, I., Galeano, J., & Luque, J. (2018). Using network science to analyse football passing networks: Dynamics, space, time, and the multilayer nature of the game. Frontiers in psychology, 9, 1900. \[7\] Kim, H. C., Kwon, O., & Li, K. J. (2011, November). Spatial and spatiotemporal analysis of soccer. In Proceedings of the 19th ACM SIGSPATIAL international conference on advances in geographic information systems (pp. 385-388). \[8\] Link, D., Lang, S., & Seidenschwarz, P. (2016). Real time quantification of dangerousity in football using spatiotemporal tracking data. PloS one, 11(12), e0168768. \[9\] Fernández, J., & Bornn, L. (2020, September). Soccermap: A deep learning architecture for visually-interpretable analysis in soccer. In Joint European Conference on Machine Learning and Knowledge Discovery in Databases (pp. 491-506). Cham: Springer International Publishing. \[10\] Garrido, D., Burriel, B., Resta, R., del Campo, R. L., & Buldú, J. M. (2022). Heatmaps in soccer: Event vs tracking datasets. Chaos, Solitons & Fractals, 165, 112827. \[11\] Liu, N. (2022). GeoVisualisation of Football Players Movement. Olomouc. diplomová práce (Mgr.). Univerzita Palackého v Olomouci. Přírodovědecká fakulta. \[12\] Kotzbek, G., & Kainz, W. (2015, August). Gis-based football game analysis–a brief introduction to the applied data base and a guideline on how to utilise it. In Proceedings of the 27th International Cartographic Conference (pp. 1-10). \[13\] Memmert, D., Lemmink, K. A., & Sampaio, J. (2017). Current approaches to tactical performance analyses in soccer using position data. Sports medicine, 47(1), 1-10. \[14\] Thakali, L., Kwon, T. J., & Fu, L. (2015). Identification of crash hotspots using kernel density estimation and kriging methods: a comparison. Journal of Modern Transportation, 23(2), 93-106. \[15\] Wand, M. P., & Jones, M. C. (1994). Kernel smoothing. CRC press. \[16\] Rudd, S. (2011, September). A framework for tactical analysis and individual offensive production assessment in soccer using Markov chains. In New England symposium on statistics in sports (pp. 36-55). \[17\]Singh, K. (2018, February 15). Introducing expected threat (xT). Karun.in. https://karun.in/blog/expected-threat.html \[18\]Heiner, M., Fellingham, G. W., & Thomas, C. (2014). Skill importance in women’s soccer. Journal of Quantitative Analysis in Sports, 10(2), 287-302.
+## 3.8 针对球员个人的分析
+
+在上述研究中，我们完成了对球队整体的球权价值评估。在此基础上，本文进一步将该模型拓展至球员个体层面，从而构建一个更加客观、统一的评价体系来衡量不同位置球员的战术价值。
+
+过往研究及实际足球市场中，球员价值（例如参考德国转会市场的身价评估体系）往往更偏重进攻属性，中前场球员通常因进球、助攻等直接贡献而获得更高评价，而防守球员的价值则较难通过传统统计指标进行充分刻画。
+
+相比之下，本文所构建的球权价值模型能够在统一框架下同时刻画进攻与防守贡献，使得不同位置球员之间具备可比性，从而实现更加均衡与全面的评价。
+
+
+### 3.8.1 可视化方法说明
+
+在球员层分析中，本文采用两种不同的数据处理方式进行可视化表达：
+
+1. **频次筛选方法（阈值 = 3）**  
+   对低频出现的空间网格（触球次数小于3）进行过滤，从而减少偶然事件的干扰，使得整体空间分布更加平滑，有利于观察球员的“常态活动模式”。
+
+2. **未筛选方法（完整数据）**  
+   保留所有球权相关事件，虽然空间分布相对不平滑，但能够反映更完整的细节信息，包括低频但高价值的关键行为。
+
+两种方式分别对应“趋势表达”与“细节保留”，在分析中具有互补作用。
+
+
+### 3.8.2 个案分析：胡梅尔斯（Hummels）
+
+![胡梅尔斯筛选后](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Player_Hummels_Filtered.png?raw=true)
+
+![胡梅尔斯筛选前](https://github.com/saloi004/undergraduate-thesis-bundesliga/blob/main/output_figures/Player_Hummels_Unfiltered.png?raw=true)
+
+以胡梅尔斯为例，在经过频次筛选后，其战术价值主要集中于本方后场区域，尤其是中后场中路位置，呈现出明显的防守核心与出球枢纽特征。这一结果与其在比赛中的实际角色高度一致，即作为中后卫承担防守组织与后场出球任务。
+
+在未筛选图像中，可以观察到部分零散分布的中前场价值点，这些点通常对应于低频但具有一定战术意义的长传推进或参与进攻的行为。尽管这些点在空间上具有一定价值，但由于出现频率较低，在整体战术结构中的代表性有限。
+
+对比两种图像可以发现，筛选后的结果更清晰地反映出胡梅尔斯的“稳定活动区域”，而未筛选图像则补充了其“偶发性贡献”。这也说明，防守球员的价值不仅体现在高频区域控制上，同时也包含少量关键推进行为。
+
+
+### 3.8.3 不同位置球员空间分布对比
+
+在个案分析基础上，本文进一步选取不同位置的代表性球员进行对比分析，包括：
+
+- Aubameyang（前锋，ST）
+- Mkhitaryan（进攻型中场，CAM）
+- Weigl（后腰，CDM）
+- Hummels（中后卫，CB）
+
+结合核心空间指标（Core Spatial Metrics）与区域价值模型，从空间分布图与量化特征可以观察到明显的战术分化：
+
+| 球员 (位置) | 重心 X 坐标 | 重心 Y 坐标 | 前场进攻价值 (Attack Value) | 中场控制价值 (Midfield Control) | 后场防守价值 (Defense Value) | 空间稳定性 (Stability) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| Aubameyang (ST) | 64.7 | 39.9 | 13156.30 | 9078.66 | 10168.74 | 1.54 |
+| Mkhitaryan (CAM)| 61.7 | 43.7 | 15233.87 | 10355.64 | 14079.68 | 2.09 |
+| Weigl (CDM) | 57.0 | 38.6 | 10931.05 | 8274.54 | 12410.65 | 1.32 |
+| Hummels (CB) | 45.2 | 42.3 | 8837.39 | 8855.83 | 20056.10 | 1.33 |
+
+- **Aubameyang** 的高价值区域高度集中于前场及禁区附近。其空间分布的 X 轴重心（Centroid_X）达到 64.7，为四人中最靠前。其前场空间价值（Attack Value）高达 13156.3，说明其主要承担终结任务，战术价值高度依赖于少数高威胁区域的跑位与抢点；
+- **Mkhitaryan** 的价值分布覆盖前场及中场连接区域。其 X 轴重心为 61.7，虽然位置靠前，但其前场价值（15233.9）与中场控制价值（10355.6）均处于极高水平，且空间稳定性（Stability）达到了 2.09，体现出其在推进与组织中作为前场自由人与衔接桥梁的全面作用；
+- **Weigl** 的分布更加均匀，X 轴重心回撤至 57.0。他在中后场的防守价值（Defense Value）达到 12410.7，显著高于其前场价值。这反映出其作为单后腰在攻防转换中的调度功能与位置纪律性；
+- **Hummels** 则主要集中于后场，X 轴重心仅为 45.2。他展现出极高的防守价值（20056.1，居四人之首），表现出明显的防守核心特征。结合此前的滤波（Filtered）与未滤波（Unfiltered）图像对比，未筛选图像中他偶尔向前延伸的高价值轨迹，进一步印证了其作为现代“出球中卫”在后场发动长传突袭的偶发性关键贡献。
+
+这种空间分布差异不仅在视觉上清晰可见，更从定量角度严格验证了不同球员的战术角色定位。
+
+
+### 3.8.4 高价值热点分析
+
+进一步结合高价值热点（Top Hotspots）面积与 14 区价值（Zone14 Value）等进阶数据可以发现，不同角色的球员在创造威胁的方式上存在显著差异：
+
+| 球员 (位置) | 高威胁区域面积 ($m^2$) | 高威胁比例 (High Threat Ratio) | 14区价值 (Zone14 Value) |
+| :--- | :---: | :---: | :---: |
+| Aubameyang (ST) | 334 | 3.48% | 1588.9 |
+| Mkhitaryan (CAM)| 493 | 5.14% | 1841.8 |
+| Weigl (CDM) | 25 | 0.26% | 1879.9 |
+| Hummels (CB) | 842 | 8.77% | 1773.0 |
+
+
+- **Aubameyang** 的高威胁区域面积（High Threat Area）为 334 平方米，高威胁比例占比 3.48%。其热点几乎全部集中在禁区及其周边区域，结合其高达 1588.9 的 14 区价值，体现出典型“机会终结者”的特征，即不需要大面积的球权覆盖，只需在关键区域给出致命一击；
+- **Mkhitaryan** 展现了极强的创造力，其高威胁区域面积达到 493 平方米，高威胁比例（5.1%）在进攻球员中表现突出。其热点分布更为分散，尤其在前场右侧及中路区域的 14 区价值（1841.8）极高，说明其具备多点创造威胁、撕开对手防线的能力；
+- **Weigl** 的高威胁区域面积仅为 25 平方米，高威胁比例低至 0.26%，这与其远离对方禁区的站位完全吻合。然而，其 14 区价值（1879.9）却令人瞩目。这表明 Weigl 虽然不直接在核心区域持球突破或射门，但他向 14 区输送的传球（如渗透性直塞）是球队进攻发起的关键枢纽；
+- **Hummels** 的数据呈现出一种特殊的中卫模型：其高威胁比例高达 8.77%，高威胁区域面积更达到了惊人的 842 平方米。这颠覆了传统中卫仅限防守的刻板印象。这一方面得益于其在定位球战术中的前插威慑力，另一方面也直观反映了现代足球中，顶级出球中卫通过精准的长传制导，能够直接从本方半场将球权转化为高威胁的进攻动作。
+
+
+### 3.8.5 价值分布与稳定性分析
+
+从球权价值分布结构来看，各球员表现出不同的“价值生成模式”：
+
+- Aubameyang 高价值事件占比较高，但整体分布不均匀，说明其依赖关键机会；
+- Weigl 的价值分布更为平滑，极高价值事件较少，但持续输出稳定；
+- Mkhitaryan 在中高价值区间均有贡献，表现出较强的综合能力；
+- Hummels 则主要集中于低价值区间，但覆盖范围较广，体现基础性作用。
+
+这一结果从分布角度揭示了“爆发型”与“稳定型”球员之间的差异。
+
