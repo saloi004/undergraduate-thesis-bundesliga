@@ -789,3 +789,118 @@ p_multi_sensitivity <- ggplot(sensitivity_results, aes(x = Perturbation_Label, y
 ggsave("output_figures/Model_Sensitivity_Line_Plot.png", plot = p_multi_sensitivity, width = 8, height = 6, dpi = 300, bg="white")
 ```
 
+
+# 九、补充数据分析
+```{r}
+# ==========================================
+# 宏观对比：多特蒙德战术价值场及双强差异分析
+# ==========================================
+
+# 1. 提取多特蒙德数据并进行网格聚合
+dortmund_base <- final_model_data %>% 
+  filter(team.name == "Borussia Dortmund") %>% 
+  mutate(grid_x = round(location.x), grid_y = round(location.y)) %>%
+  group_by(grid_x, grid_y) %>% 
+  summarise(avg_z = mean(value_z, na.rm = TRUE), count = n(), .groups = "drop")
+
+dortmund_sp <- dortmund_base
+coordinates(dortmund_sp) <- ~grid_x + grid_y
+
+# 2. 多特蒙德克里金插值推演
+dortmund_krige <- krige(avg_z ~ 1, locations = dortmund_sp, newdata = pred_grid, model = v_model_fitted, nmax = 50)
+dortmund_df <- as.data.frame(dortmund_krige)
+colnames(dortmund_df)[which(names(dortmund_df) == "grid_x")] <- "x"
+colnames(dortmund_df)[which(names(dortmund_df) == "grid_y")] <- "y"
+
+# 3. 渲染多特蒙德单队表现图
+create_pitch_plot(dortmund_df, 
+                  "Dortmund Tactical Value Field", 
+                  "High-intensity vertical transition and half-space penetration", 
+                  "output_figures/Macro_Dortmund_Team_Field.png")
+
+# 4. 计算并绘制 拜仁 vs 多特蒙德 战术差异图
+diff_derby_df <- bayern_df
+# 正值(偏红)代表拜仁价值更高的区域，负值(偏蓝)代表多特蒙德价值更高的区域
+diff_derby_df$diff_z <- bayern_df$var1.pred - dortmund_df$var1.pred
+
+p_diff_derby <- ggplot(diff_derby_df, aes(x = x, y = y, z = diff_z)) +
+  geom_contour_filled(breaks = diff_breaks) +
+  scale_fill_manual(values = diff_colors, name = "Value Diff (Bayern - BVB)", guide = guide_colorsteps(show.limits = TRUE)) +
+  get_pitch_lines("black") + 
+  theme_void() + 
+  theme(plot.title = element_text(size = 32, face = "bold", hjust = 0.5, margin = margin(t=5, b = 5)),
+        plot.subtitle = element_text(size = 18, hjust = 0.5, color = "grey20", margin = margin(b = 10)),
+        plot.background = element_rect(fill = "white", color = NA)) +
+  labs(title = "Tactical Difference: Bayern vs Dortmund", 
+       subtitle = "Red: Bayern dominance (Central control) | Blue: Dortmund dominance (Verticality)")
+
+ggsave("output_figures/Macro_Bayern_vs_Dortmund_Diff.png", plot = p_diff_derby, width = 5, height = 4, dpi = 300, bg="white")
+```
+
+
+```{r}
+# ==========================================
+# 5. 论文级可视化：使用 patchwork 拼接双强对比全景图
+# ==========================================
+# 如果没有安装，请先取消注释安装
+# install.packages("patchwork")
+library(patchwork)
+
+# (1) 定制拜仁单队子图（隐藏图例以保持画面整洁）
+p_bayern_sub <- ggplot(bayern_df, aes(x = x, y = y, z = var1.pred)) +
+  geom_contour_filled(breaks = my_breaks) +
+  scale_fill_manual(values = my_colors, name = "Tactical Value Z", guide = "none") +
+  get_pitch_lines("black") +
+  theme_void() + 
+  theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5, margin = margin(b=10)),
+        plot.background = element_rect(fill = "white", color = NA)) +
+  labs(title = "Bayern Munich (Positional Play)")
+
+# (2) 定制多特蒙德单队子图（隐藏图例）
+p_dortmund_sub <- ggplot(dortmund_df, aes(x = x, y = y, z = var1.pred)) +
+  geom_contour_filled(breaks = my_breaks) +
+  scale_fill_manual(values = my_colors, name = "Tactical Value Z", guide = "none") + 
+  get_pitch_lines("black") +
+  theme_void() + 
+  theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5, margin = margin(b=10)),
+        plot.background = element_rect(fill = "white", color = NA)) +
+  labs(title = "Borussia Dortmund (Vertical Transitions)")
+
+# (3) 定制差异图子图（将图例放在底部横向展开）
+p_diff_sub <- ggplot(diff_derby_df, aes(x = x, y = y, z = diff_z)) +
+  geom_contour_filled(breaks = diff_breaks) +
+  scale_fill_manual(values = diff_colors, name = "Value Diff (FCB - BVB)", 
+                    guide = guide_colorsteps(show.limits = TRUE, title.position = "top", barwidth = 20, barheight = 0.5)) +
+  get_pitch_lines("black") + 
+  theme_void() + 
+  theme(plot.title = element_text(size = 24, face = "bold", hjust = 0.5, margin = margin(b=10)),
+        legend.position = "bottom",
+        legend.title = element_text(size = 12, face = "bold", hjust = 0.5),
+        plot.background = element_rect(fill = "white", color = NA)) +
+  labs(title = "Tactical Difference Map")
+
+# (4) 使用 patchwork 语法拼合图像
+# 语法说明： (A | B) 表示 A和B 水平并排， / C 表示 C 放在它们下方
+combined_derby_plot <- (p_bayern_sub | p_dortmund_sub) / p_diff_sub +
+  plot_layout(heights = c(1, 1.2)) + # 调整上下两部分的比例
+  plot_annotation(
+    title = "Bundesliga 15/16: Tactical Playstyle Comparison",
+    subtitle = "Analysis based on Ordinary Kriging Inference of Z-Model Value Fields",
+    theme = theme(
+      plot.title = element_text(size = 24, face = "bold", hjust = 0.5, margin = margin(t=15, b=5)),
+      plot.subtitle = element_text(size = 20, hjust = 0.5, color = "grey30", margin = margin(b=15)),
+      plot.background = element_rect(fill = "white", color = NA)
+    )
+  )
+
+# (5) 导出高清大图
+ggsave("output_figures/Macro_Playstyle_Comparison_Combined.png", 
+       plot = combined_derby_plot, 
+       width = 12, 
+       height = 10, 
+       dpi = 300, 
+       bg = "white")
+
+print("组合对比图已成功生成并保存至 output_figures 文件夹。")
+```
+
